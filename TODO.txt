@@ -1,4 +1,5 @@
-Wedgie data structure
+- Figure out mesh data structure
+- Wedgie data structure
 
 To push to Git:
 git add .
