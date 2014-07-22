@@ -1,7 +1,0 @@
-To load particular SMF file, pass as argument to smf_view. i.e.:
-./smf_view horse.smf
-
-NOT IMPLEMENTED:
-- Wireframe mode
-- Save file
-- Open file
