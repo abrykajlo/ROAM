@@ -1,0 +1,7 @@
+- RTIN Bintree Data Structure
+- Wedgie data structure
+
+To push to Git:
+git add .
+git commit -m "Changes"
+git push -u ROAM464 master
