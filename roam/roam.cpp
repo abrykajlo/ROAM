@@ -220,207 +220,139 @@ void control_cb(int control) {
 
 int main(int argc, char *argv[]) {
 
-        //----------------------------------------------
-        // BEGIN SMF PARSING NOT NEEDED
-        //----------------------------------------------
+    //Partition amount
+	int w = 100;
+    int h = 100;
 
-	char* filename; //Init char array for filename
-    	if (argc > 1) filename = argv[1]; //If argument passed, use for filename
-    	else filename = (char*)"horse.smf"; //Else use horse.smf as default file
-    	string buffer; //Init string for buffering each line of file
-    	ifstream is(filename);  //Open input stream for file
-    	while (getline(is, buffer)) { //Iterate through lines
-	        if (buffer.empty()) break; //Break if emptyline reached
-	        else { //Else parse through input, line by line
-                if (buffer[0] == '#') { //If line starts with #
-                    if (vertex_count == 0 && face_count == 0) { //If vertex_count and face_count not set, pull from first line
-                        unsigned int i = 2;
-                        string string_buffer;
-                        while (i < buffer.length()) {
-                            if ((int)buffer[i] == 32) {
-                                vertex_count = atoi(string_buffer.c_str()); //Set vertex_count
-                                string_buffer = "";
-                            }
-                            else if (i == buffer.length()-1) {
-                                string_buffer += buffer[i];
-                                face_count = atoi(string_buffer.c_str()); //Set face_count
-                            }
-                            else {
-                                string_buffer += buffer[i];
-                            }
-                            i++;
-                        }
-                    }
-                }
-                if (buffer[0] == 'v') { //If line starts with v, parse line as vertex
-                    point4 vertex_point;
-                    string vertex_coords[3];
-                    vertex_coords[0] = "";
-                    vertex_coords[1] = "";
-                    vertex_coords[2] = "";
-
-                    unsigned int i = 2;
-                    int coord_index = 0; 
-                    string string_buffer;
-                    while (i < buffer.length()) {
-                        if ((int)buffer[i] == 32) {
-                            vertex_coords[coord_index] = string_buffer;
-                            string_buffer = "";
-                            coord_index++;
-                        }
-                        else if (i == buffer.length()-1) {
-                            string_buffer += buffer[i];
-                            vertex_coords[coord_index] = string_buffer;
-                        }
-                        else {
-                            string_buffer += buffer[i];
-                        }
-                        i++;
-                    }
-
-                    //Build temporary point
-                    vertex_point.x = atof(vertex_coords[0].c_str());
-                    vertex_point.y = atof(vertex_coords[1].c_str());
-                    vertex_point.z = atof(vertex_coords[2].c_str());
-                    vertex_point.w = 1.0;
-
-                    //Add point to vertex list
-                    vertex_list.push_back(vertex_point);
-                }
-                if (buffer[0] == 'f') {
-                    point3 face_point;
-                    string face_tris[3];
-                    face_tris[0] = "";
-                    face_tris[1] = "";
-                    face_tris[2] = "";
-
-                    unsigned int i = 2;
-                    int tri_index = 0; 
-                    string string_buffer;
-                    while (i < buffer.length()) {
-                        if ((int)buffer[i] == 32) {
-                            face_tris[tri_index] = string_buffer;
-                            string_buffer = "";
-                            tri_index++;
-                        }
-                        else if (i == buffer.length()-1) {
-                            string_buffer += buffer[i];
-                            face_tris[tri_index] = string_buffer;
-                        }
-                        else {
-                            string_buffer += buffer[i];
-                        }
-                        i++;
-                    }
-
-                    //Build temporary face
-                    face_point.x = atof(face_tris[0].c_str());
-                    face_point.y = atof(face_tris[1].c_str());
-                    face_point.z = atof(face_tris[2].c_str());
-
-                    //Add face to face list
-                    face_list.push_back(face_point);
-                }   
-	        }
-    	} 
-
-    	//Check that the number of vertices and faces parsed from the file matches the amount given in the first line of the file
-        if ((vertex_count != vertex_list.size()) || (face_count != face_list.size())) cout << "Parse error!\n";
-
-        //Iterate through face list to build new vertex list in triangle pattern
-        for (unsigned int i = 0; i < face_count; i++) {
-        	//Build triangle based on indices of vertices from face list
-            point4 a = vertex_list[(int)face_list[i].x-1];
-            point4 b = vertex_list[(int)face_list[i].y-1];
-            point4 c = vertex_list[(int)face_list[i].z-1];
-
-            //Push vertices of triangle on to final vertex (point) list
-            obj_points[(i*3)] = a;
-            obj_points[(i*3)+1] = b;
-            obj_points[(i*3)+2] = c;    
-
-            //Calculate normal of face using vertices of the triangle
-            vec3 normal = normalize( cross(b - a, c - b) );
-            norm_list.push_back(normal);
-
-            //Push normals of each face on to final normal list, with redundancy to match length of vertex list
-            obj_normals[(i*3)] = normal;
-            obj_normals[(i*3)+1] = normal;
-            obj_normals[(i*3)+2] = normal;
+    //Build vertex list
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            point4 new_vertex;
+            new_vertex.x = -1.0+((j/((w-1)*1.0))*2.0);
+            new_vertex.z = -1.0+((i/((h-1)*1.0))*2.0);
+            new_vertex.y = 0;
+            new_vertex.w = 1;
+            vertex_list.push_back(new_vertex);
         }
+    }
 
-        //--------------------------------------------
-        // END SMF PARSING NOT NEEDED
-        //--------------------------------------------
+    //Build face list
+    for (int i = 0; i < (h-1); ++i) {
+        for (int j = 0; j < (w-1); ++j) {
+            point3 new_face1;
+            point3 new_face2;
 
-        //GLUT initializations
-        glutInit( &argc, argv );
-        glutInitDisplayMode( GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH );
-        glutInitWindowPosition( 50, 50 );
-        glutInitWindowSize( 800, 600 );
-        glutInitContextVersion( 3, 0 );
-        glutInitContextProfile( GLUT_CORE_PROFILE );
-        main_window = glutCreateWindow( "SMF Viewer" );
+            new_face1.x = (i*w)+(j+0);
+            new_face1.y = (i*w)+(j+1);
+            new_face1.z = ((i+1)*w)+(j+0);
+            
+            new_face2.x = (i*w)+(j+1);
+            new_face2.y = ((i+1)*w)+(j+0);
+            new_face2.z = ((i+1)*w)+(j+1);
 
-        //Main init
-        glewInit();        
-        init();
+            face_list.push_back(new_face1);
+            face_list.push_back(new_face2);
+        }
+    }
 
-        //GLUT function binds
-        glutDisplayFunc(display);
-        glutReshapeFunc(reshape);
-        glutKeyboardFunc(keyboard);
-        glutMouseFunc(mouse);
+    //Set vertex and face count
+    vertex_count = vertex_list.size();
+    face_count = face_list.size();
 
-        //Set background colour to grey
-        glClearColor( 0.5f, 0.5f, 0.5f, 1.0f);
+    //Iterate through face list to build new vertex list in triangle pattern
+    for (unsigned int i = 0; i < face_count; i++) {
+    	//Build triangle based on indices of vertices from face list
+        point4 a = vertex_list[(int)face_list[i].x];
+        point4 b = vertex_list[(int)face_list[i].y];
+        point4 c = vertex_list[(int)face_list[i].z];
 
-        //Create bottom panel using GLUI
-        glui = GLUI_Master.create_glui_subwindow(main_window, GLUI_SUBWINDOW_BOTTOM);
-        glui->set_main_gfx_window(main_window);
+        //Push vertices of triangle on to final vertex (point) list
+        obj_points[(i*3)] = a;
+        obj_points[(i*3)+1] = b;
+        obj_points[(i*3)+2] = c;    
 
-        //Add rotation ball
-        GLUI_Rotation *view_rot = new GLUI_Rotation(glui, "Rotate", view_rotate);
-        view_rot->set_spin(0.05);
-        new GLUI_Column(glui, false);
+        //Calculate normal of face using vertices of the triangle
+        vec3 normal = normalize( cross(b - a, c - b) );
+        norm_list.push_back(normal);
 
-        //Add zoom slider
-        GLUI_Translation *trans_y = new GLUI_Translation(glui, "Zoom", GLUI_TRANSLATION_Z, &obj_scale);
-        trans_y->set_speed(0.05);
-        new GLUI_Column(glui, false);
+        //Push normals of each face on to final normal list, with redundancy to match length of vertex list
+        obj_normals[(i*3)] = normal;
+        obj_normals[(i*3)+1] = normal;
+        obj_normals[(i*3)+2] = normal;
+    }
 
-        //Add translation x/y sliders
-        GLUI_Translation *trans_xy = new GLUI_Translation(glui, "Translate X/Y", GLUI_TRANSLATION_XY, pos);
-        trans_xy->set_speed(0.05);
-        new GLUI_Column(glui, false);
+    //--------------------------------------------
+    // END SMF PARSING NOT NEEDED
+    //--------------------------------------------
 
-        //Add translate z slider
-        GLUI_Translation *trans_z = new GLUI_Translation(glui, "Translate Z", GLUI_TRANSLATION_Z, &pos[2]);
-        trans_z->set_speed(0.05);
-        new GLUI_Column(glui, false);
+    //GLUT initializations
+    glutInit( &argc, argv );
+    glutInitDisplayMode( GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH );
+    glutInitWindowPosition( 50, 50 );
+    glutInitWindowSize( 800, 600 );
+    glutInitContextVersion( 3, 0 );
+    glutInitContextProfile( GLUT_CORE_PROFILE );
+    main_window = glutCreateWindow( "SMF Viewer" );
 
-        //Add save file text field and button
-        new GLUI_StaticText(glui, "");
-        savetext = new GLUI_EditText(glui, "Save File:", GLUI_EDITTEXT_TEXT);
-        savebtn = new GLUI_Button(glui, "Save", SAVEID, control_cb);
-        new GLUI_Column(glui, false);
+    //Main init
+    glewInit();        
+    init();
 
-        //Add load file text field and button
-        new GLUI_StaticText(glui, "");
-        loadtext = new GLUI_EditText(glui, "Open File:", GLUI_EDITTEXT_TEXT);
-        loadbtn = new GLUI_Button(glui, "Open", LOADID, control_cb);
-        new GLUI_Column(glui, false);
+    //GLUT function binds
+    glutDisplayFunc(display);
+    glutReshapeFunc(reshape);
+    glutKeyboardFunc(keyboard);
+    glutMouseFunc(mouse);
 
-        //Add list of rendering options
-        new GLUI_StaticText(glui, "");
-        GLUI_Listbox *list = new GLUI_Listbox(glui, "Mode:", &curr_string);
-        for(int i = 0; i < 4; i++) list->add_item(i, string_list[i]);
-        new GLUI_StaticText(glui, "");
-        
-        //Quit button
-        new GLUI_Button(glui, "Quit", 0,(GLUI_Update_CB)exit);
+    //Set background colour to grey
+    glClearColor( 0.5f, 0.5f, 0.5f, 1.0f);
 
-        //Main GLUT loop
-        glutMainLoop();
-        return 0;
+    //Create bottom panel using GLUI
+    glui = GLUI_Master.create_glui_subwindow(main_window, GLUI_SUBWINDOW_BOTTOM);
+    glui->set_main_gfx_window(main_window);
+
+    //Add rotation ball
+    GLUI_Rotation *view_rot = new GLUI_Rotation(glui, "Rotate", view_rotate);
+    view_rot->set_spin(0.05);
+    new GLUI_Column(glui, false);
+
+    //Add zoom slider
+    GLUI_Translation *trans_y = new GLUI_Translation(glui, "Zoom", GLUI_TRANSLATION_Z, &obj_scale);
+    trans_y->set_speed(0.05);
+    new GLUI_Column(glui, false);
+
+    //Add translation x/y sliders
+    GLUI_Translation *trans_xy = new GLUI_Translation(glui, "Translate X/Y", GLUI_TRANSLATION_XY, pos);
+    trans_xy->set_speed(0.05);
+    new GLUI_Column(glui, false);
+
+    //Add translate z slider
+    GLUI_Translation *trans_z = new GLUI_Translation(glui, "Translate Z", GLUI_TRANSLATION_Z, &pos[2]);
+    trans_z->set_speed(0.05);
+    new GLUI_Column(glui, false);
+
+    //Add save file text field and button
+    new GLUI_StaticText(glui, "");
+    savetext = new GLUI_EditText(glui, "Save File:", GLUI_EDITTEXT_TEXT);
+    savebtn = new GLUI_Button(glui, "Save", SAVEID, control_cb);
+    new GLUI_Column(glui, false);
+
+    //Add load file text field and button
+    new GLUI_StaticText(glui, "");
+    loadtext = new GLUI_EditText(glui, "Open File:", GLUI_EDITTEXT_TEXT);
+    loadbtn = new GLUI_Button(glui, "Open", LOADID, control_cb);
+    new GLUI_Column(glui, false);
+
+    //Add list of rendering options
+    new GLUI_StaticText(glui, "");
+    GLUI_Listbox *list = new GLUI_Listbox(glui, "Mode:", &curr_string);
+    for(int i = 0; i < 4; i++) list->add_item(i, string_list[i]);
+    new GLUI_StaticText(glui, "");
+    
+    //Quit button
+    new GLUI_Button(glui, "Quit", 0,(GLUI_Update_CB)exit);
+
+    //Main GLUT loop
+    glutMainLoop();
+    return 0;
 }
