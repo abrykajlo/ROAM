@@ -6,11 +6,21 @@ HeightMap::HeightMap() {
 	w = 0;
 }
 
-HeightMap::HeightMap(RGBA* pixels, int w, int h, float height = 1.0) {
-	this->pixels = pixels;
-	this->w = w;
-	this->h = h;
+HeightMap::HeightMap(const char * Filename, float height = 1.0) {
+	CBitmap img;
+	img.Load(Filename);
+	this->pixels = img.GetBits();
+	this->w = img.GetWidth();
+	this->h = img.GetHeight();
 	this->height = height;
+}
+
+int HeightMap::GetHeight() {
+	return h;
+}
+
+int HeightMap::GetWidth() {
+	return w;
 }
 
 float HeightMap::operator()(float x, float z) {

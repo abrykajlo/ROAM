@@ -13,6 +13,8 @@ private:
 public:
 	HeightMap();
 	HeightMap(RGBA*, int, int, float);
+	int GetHeight();
+	int GetWidth();
 	//~HeightMap();
 	float operator()(float, float);	
 };
