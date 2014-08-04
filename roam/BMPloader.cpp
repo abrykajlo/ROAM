@@ -32,10 +32,10 @@ typedef struct                       /**** BMP file info structure ****/
     unsigned int   biClrImportant;   /* Number of important colors */
 } BITMAPINFOHEADER;
 
-int LoadBMP(const char* location, uint8_t **pixelmat, int &w, int &h) {
+uint8_t* LoadBMP(const char* location, int &w, int &h) {
     uint8_t* datBuff[2] = {0, 0}; // Header buffers
 
-    uint8_t* pixels = 0; // Pixels
+    uint8_t* pixels = 0;
 
     BITMAPFILEHEADER* bmpHeader = 0; // Header
     BITMAPINFOHEADER* bmpInfo   = 0; // Info 
@@ -46,7 +46,7 @@ int LoadBMP(const char* location, uint8_t **pixelmat, int &w, int &h) {
     {
         std::cout << "Failure to open bitmap file.\n";
 
-        return 1;
+        return NULL;
     }
 
     // Allocate byte memory that will hold the two headers
@@ -64,7 +64,7 @@ int LoadBMP(const char* location, uint8_t **pixelmat, int &w, int &h) {
     if(bmpHeader->bfType != 0x4D42)
     {
         std::cout << "File \"" << location << "\" isn't a bitmap file\n";
-        return 2;
+        return NULL;
     }
 
     // First allocate pixel memory
@@ -88,33 +88,19 @@ int LoadBMP(const char* location, uint8_t **pixelmat, int &w, int &h) {
     // Set width and height to the values loaded from the file
     w = (int)bmpInfo->biWidth;
     h = (int)bmpInfo->biHeight;
+    
 
-    int k = 0;
-    pixelmat = new uint8_t*[w];
-    for (int i = 0; i < h; ++i) {
-        pixelmat[i] = new uint8_t[h];
-        for (int j = 0; j < w; ++j) {
-            pixelmat[j][i] = pixels[k];
-            k+=3;
-        }
-    }
-    return 0;
+
+    return pixels;
 }
 
 int main(int argc, char const *argv[]) {
 
     int w, h;
-    uint8_t** img;
-    LoadBMP("test.bmp", img, w, h);
+    uint8_t* img = 0;
+    img = LoadBMP("test.bmp", w, h);
 
-    for (int i = 0; i < h; ++i)
-    {
-        for (int j = 0; j < w; ++j)
-        {
-            cout << img[j][i] << " ";
-        }
-        cout << endl;
-    }
+   	cout << (int)img[4];
 
     return 0;
 }
