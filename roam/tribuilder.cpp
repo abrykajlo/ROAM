@@ -17,8 +17,8 @@ vector<point3> face_list;
 
 int main(int argc, char const *argv[])
 {
-    int w = 3;
-    int h = 3;
+    int w = 100;
+    int h = 100;
 
     for (int i = 0; i < h; ++i) {
         for (int j = 0; j < w; ++j) {
@@ -49,9 +49,9 @@ int main(int argc, char const *argv[])
         }
     }
 
-    for (int i = 0; i < face_list.size(); ++i)
+    for (int i = 0; i < vertex_list.size(); ++i)
     {
-        cout << face_list[i].x << " " << face_list[i].y << " " << face_list[i].z << endl;
+        cout << vertex_list[i].x << " " << vertex_list[i].y << " " << vertex_list[i].z << endl;
     }
 
     return 0;

@@ -1,3 +1,7 @@
+#include <iostream>
+
+using namespace std;
+
 #include "HeightMap.h"
 
 HeightMap::HeightMap() {
@@ -7,9 +11,8 @@ HeightMap::HeightMap() {
 }
 
 HeightMap::HeightMap(const char * Filename, float height = 1.0) {
-	CBitmap img;
 	img.Load(Filename);
-	this->pixels = img.GetBits();
+	this->pixels = (RGBA*)img.GetBits();
 	this->w = img.GetWidth();
 	this->h = img.GetHeight();
 	this->height = height;
@@ -28,13 +31,12 @@ float HeightMap::operator()(float x, float z) {
 	//get in range 0.0 to 2.0
 	x += 1.0;
 	z += 1.0;
-	
-	int i, j; //indices of point to fetch
 
-	i = ((float) w) * (x / 2.0);
-	j = ((float) h) * (z / 2.0);
+	unsigned int i, j; //indices of point to fetch
 
-	RGBA pVal = pixels[i * w + j];
+	i = ((float) (w-1)) * (x / 2.0);
+	j = ((float) (h-1)) * (z / 2.0);
 
-	return static_cast<float>(pVal.Red) / 255.0 * height;
+	int rVal = pixels[i * w + j].Red;
+	return rVal / 255.0 * height;
 }

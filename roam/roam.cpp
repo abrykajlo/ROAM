@@ -5,7 +5,7 @@
 #include "include/Angel.h"
 #include "include/GL/glui.h"
 
-#include "node.h"
+#include "HeightMap.h"
 
 #include <iostream>
 #include <cstdlib>
@@ -220,9 +220,13 @@ void control_cb(int control) {
 
 int main(int argc, char *argv[]) {
 
+
+    HeightMap height_vals("heightmap.bmp", 1.0);
+
     //Partition amount
-	int w = 100;
-    int h = 100;
+	int w = height_vals.GetWidth();
+    int h = height_vals.GetHeight();
+
 
     //Build vertex list
     for (int i = 0; i < h; ++i) {
@@ -230,7 +234,8 @@ int main(int argc, char *argv[]) {
             point4 new_vertex;
             new_vertex.x = -1.0+((j/((w-1)*1.0))*2.0);
             new_vertex.z = -1.0+((i/((h-1)*1.0))*2.0);
-            new_vertex.y = 0;
+            new_vertex.y = height_vals(new_vertex.x, new_vertex.z);
+            cout << new_vertex.y << endl;
             new_vertex.w = 1;
             vertex_list.push_back(new_vertex);
         }

@@ -6,13 +6,14 @@
 
 class HeightMap {
 private:
+	CBitmap img;
 	RGBA* pixels;
 	int h;
 	int w;
 	float height;
 public:
 	HeightMap();
-	HeightMap(RGBA*, int, int, float);
+	HeightMap(const char*, float);
 	int GetHeight();
 	int GetWidth();
 	//~HeightMap();
