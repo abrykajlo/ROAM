@@ -32,7 +32,7 @@ GLuint m_vaoID; //Vertex array
 GLuint m_vboID; //Vertex buffer
 
 //Maximum number of faces: 50000
-const int NumVertices_Obj = 50000*3; 
+const int NumVertices_Obj = 5000000*3; 
 
 //Int ID for main window
 int   main_window;
@@ -172,9 +172,9 @@ void reshape(int width, int height) {
 	//Build and bind viewport to program
     glViewport(0, 0, width, height);
 
-    GLfloat  left = -10.0, right = 10.0;
-    GLfloat  bottom = -11.0, top = 9.0;
-    GLfloat  zNear = -10.0, zFar = 10.0;
+    GLfloat  left = -100.0, right = 100.0;
+    GLfloat  bottom = -110.0, top = 90.0;
+    GLfloat  zNear = -100.0, zFar = 100.0;
 
     GLfloat aspect = GLfloat(width)/height;
 
@@ -221,7 +221,7 @@ void control_cb(int control) {
 int main(int argc, char *argv[]) {
 
 
-    HeightMap height_vals("heightmap.bmp", 1.0);
+    HeightMap height_vals("heightmap.bmp", 0.5);
 
     //Partition amount
 	int w = height_vals.GetWidth();
@@ -235,11 +235,11 @@ int main(int argc, char *argv[]) {
             new_vertex.x = -1.0+((j/((w-1)*1.0))*2.0);
             new_vertex.z = -1.0+((i/((h-1)*1.0))*2.0);
             new_vertex.y = height_vals(new_vertex.x, new_vertex.z);
-            cout << new_vertex.y << endl;
             new_vertex.w = 1;
             vertex_list.push_back(new_vertex);
         }
     }
+
 
     //Build face list
     for (int i = 0; i < (h-1); ++i) {
@@ -285,6 +285,7 @@ int main(int argc, char *argv[]) {
         obj_normals[(i*3)+1] = normal;
         obj_normals[(i*3)+2] = normal;
     }
+
 
     //--------------------------------------------
     // END SMF PARSING NOT NEEDED
