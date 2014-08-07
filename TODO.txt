@@ -1,3 +1,5 @@
+Adam test
+
 - RTIN Bintree Data Structure
 - Wedgie data structure
 
