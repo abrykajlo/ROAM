@@ -6,6 +6,7 @@
 #include "include/GL/glui.h"
 
 #include "HeightMap.h"
+#include "MeshBuilder.h"
 
 #include <iostream>
 #include <cstdlib>
@@ -220,43 +221,65 @@ void control_cb(int control) {
 
 int main(int argc, char *argv[]) {
 
+    HeightMap height_vals("heightmapfixed.bmp", 0.5);
 
-    HeightMap height_vals("heightmap.bmp", 0.5);
+    int w = 513;
+    int h = 513;
 
-    //Partition amount
-	int w = height_vals.GetWidth();
-    int h = height_vals.GetHeight();
-
-
-    //Build vertex list
     for (int i = 0; i < h; ++i) {
         for (int j = 0; j < w; ++j) {
             point4 new_vertex;
             new_vertex.x = -1.0+((j/((w-1)*1.0))*2.0);
-            new_vertex.z = -1.0+((i/((h-1)*1.0))*2.0);
-            new_vertex.y = height_vals(new_vertex.x, new_vertex.z);
+            new_vertex.y = -1.0+((i/((h-1)*1.0))*2.0);
+            new_vertex.z = height_vals(new_vertex.x, new_vertex.y); //Height value
             new_vertex.w = 1;
             vertex_list.push_back(new_vertex);
         }
     }
 
-
-    //Build face list
-    for (int i = 0; i < (h-1); ++i) {
-        for (int j = 0; j < (w-1); ++j) {
+    for (int i = 0; i < (h-2); i+=2) {
+        for (int j = 0; j < (w-2); j+=2) {
             point3 new_face1;
             point3 new_face2;
+            point3 new_face3;
+            point3 new_face4;
+            point3 new_face5;
+            point3 new_face6;
+            point3 new_face7;
+            point3 new_face8;
 
-            new_face1.x = (i*w)+(j+0);
-            new_face1.y = (i*w)+(j+1);
-            new_face1.z = ((i+1)*w)+(j+0);
-            
-            new_face2.x = (i*w)+(j+1);
-            new_face2.y = ((i+1)*w)+(j+0);
-            new_face2.z = ((i+1)*w)+(j+1);
-
+            new_face1.x = (i*w)+(j+0); //0
+            new_face1.y = ((i+1)*w)+(j+1); //4
+            new_face1.z = (i*w)+(j+1); //1
+            new_face2.x = ((i+1)*w)+(j+1); //4
+            new_face2.y = (i*w)+(j+0); //0
+            new_face2.z = ((i+1)*w)+(j+0); //3
+            new_face3.x = ((i+1)*w)+(j+1); //4
+            new_face3.y = (i*w)+(j+2); //2
+            new_face3.z = (i*w)+(j+1); //1
+            new_face4.x = (i*w)+(j+2); //2
+            new_face4.y = ((i+1)*w)+(j+1); //4
+            new_face4.z = ((i+1)*w)+(j+2); //5
+            new_face5.x = ((i+2)*w)+(j+0); //6
+            new_face5.y = ((i+1)*w)+(j+1); //4
+            new_face5.z = ((i+1)*w)+(j+0); //3
+            new_face6.x = ((i+1)*w)+(j+1); //4
+            new_face6.y = ((i+2)*w)+(j+0); //6
+            new_face6.z = ((i+2)*w)+(j+1); //7
+            new_face7.x = ((i+1)*w)+(j+1); //4
+            new_face7.y = ((i+2)*w)+(j+2); //8
+            new_face7.z = ((i+1)*w)+(j+2); //5
+            new_face8.x = ((i+2)*w)+(j+2); //8
+            new_face8.y = ((i+1)*w)+(j+1); //4
+            new_face8.z = ((i+2)*w)+(j+1); //7
             face_list.push_back(new_face1);
             face_list.push_back(new_face2);
+            face_list.push_back(new_face3);
+            face_list.push_back(new_face4);
+            face_list.push_back(new_face5);
+            face_list.push_back(new_face6);
+            face_list.push_back(new_face7);
+            face_list.push_back(new_face8);
         }
     }
 
@@ -267,9 +290,9 @@ int main(int argc, char *argv[]) {
     //Iterate through face list to build new vertex list in triangle pattern
     for (unsigned int i = 0; i < face_count; i++) {
     	//Build triangle based on indices of vertices from face list
-        point4 a = vertex_list[(int)face_list[i].x];
+        point4 c = vertex_list[(int)face_list[i].x];
         point4 b = vertex_list[(int)face_list[i].y];
-        point4 c = vertex_list[(int)face_list[i].z];
+        point4 a = vertex_list[(int)face_list[i].z];
 
         //Push vertices of triangle on to final vertex (point) list
         obj_points[(i*3)] = a;
