@@ -17,7 +17,7 @@ INCLUDEDIR=/usr/include/
 LIBDIR=/usr/lib
 
 # If you have more source files add them here 
-INPUT= roam.cpp
+INPUT= testbench.cpp
 SOURCE= $(INPUT) include/InitShader.cpp HeightMap.cpp
 
 # The compiler we are using 
@@ -38,7 +38,7 @@ EXECUTABLE= $(basename $(INPUT))
 ifeq ($(OS),Windows_NT)
 	LDFLAGS = -lopengl32 -lfreeglut -lglew32 -Wl,--subsystem,windows
 else
-	LDFLAGS = -lGL -lglut -lGLEW -lGLU -lXmu -lXext -lX11 -lXi -lm -L./lib/ -lglui
+	LDFLAGS = -lGL -lglut -lGLEW -lGLU -lXmu -lXext -lX11 -lXi -lm
 endif
 
 # If you have other library files in a different directory add them here 

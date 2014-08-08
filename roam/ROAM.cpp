@@ -1,5 +1,6 @@
-// ROAM Project
-// Adam Brykajlo & Jon Holmes (301123551)
+// ASSIGNMENT #1
+// Jon Holmes
+// (301123551)
 
 #include "include/Angel.h"
 #include "include/GL/glui.h"
@@ -280,7 +281,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    //Truncate face_list to just last level of faces
     vector<point3> new_face_list(face_list.end()-((granularity*granularity)*2), face_list.end());
     face_list = new_face_list;
 

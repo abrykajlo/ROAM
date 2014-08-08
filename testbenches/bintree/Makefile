@@ -17,8 +17,8 @@ INCLUDEDIR=/usr/include/
 LIBDIR=/usr/lib
 
 # If you have more source files add them here 
-INPUT= roam.cpp
-SOURCE= $(INPUT) include/InitShader.cpp HeightMap.cpp
+INPUT= bintree.cpp
+SOURCE= $(INPUT) include/InitShader.cpp btree.cpp
 
 # The compiler we are using 
 CC= g++
