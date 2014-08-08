@@ -33,3 +33,9 @@ Terrain::~Terrain() {
 int Terrain::Parent(int node) {
 	return (node - 1) >> 1;
 }
+
+int Terrain::Child(int child, int node) {
+	if (child == LEFT || child == RIGHT)
+		return (node << 1) + child;
+	return -1;
+}

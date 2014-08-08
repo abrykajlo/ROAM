@@ -35,11 +35,7 @@ EXECUTABLE= $(basename $(INPUT))
 # to your program here 
 
 # Linux (default)
-ifeq ($(OS),Windows_NT)
-	LDFLAGS = -lopengl32 -lfreeglut -lglew32 -Wl,--subsystem,windows
-else
-	LDFLAGS = -lGL -lglut -lGLEW -lGLU -lXmu -lXext -lX11 -lXi -lm -L./lib/ -lglui
-endif
+LDFLAGS = -lglui -lGLU -lGL -lglut -lGLEW -lXmu -lXext -lX11 -lXi -lm -L./lib
 
 # If you have other library files in a different directory add them here 
 INCLUDEFLAG= -I. -I$(INCLUDEDIR) -Iinclude/
@@ -50,7 +46,7 @@ OBJECT= $(SOURCE:.cpp=.o)
 
 # Don't touch any of these either if you don't know what you're doing 
 all: $(OBJECT) depend
-	$(CC) $(CFLAGS) $(INCLUDEFLAG) $(LIBFLAG) $(OBJECT) -o $(EXECUTABLE) $(LDFLAGS)
+	$(CC) $(CFLAGS) $(INCLUDEFLAG) $(LIBFLAG) $(LDFLAGS) $(OBJECT) -o $(EXECUTABLE)
 
 depend:
 	$(CC) -M $(SOURCE) > depend

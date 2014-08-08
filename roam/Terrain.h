@@ -1,8 +1,8 @@
 #include "include/Angel.h"
 
-enum {LEFT = 1, RIGHT = 2};
+enum child {LEFT = 1, RIGHT = 2};
 
-enum {L, R, B};
+enum neighbor {L, R, B};
 
 class Terrain {
 public:
