@@ -1,9 +1,9 @@
 #include <iostream>
-#include "Terrain.h"
+#include "RTIN.h"
 
 using namespace std;
 
-Terrain::Terrain() {
+RTIN::RTIN() {
 	size = 0;
 	e_T = 0;
 	flags = 0;
@@ -11,17 +11,17 @@ Terrain::Terrain() {
 	IBO = 0;
 }
 
-void Terrain::Test() {
+void RTIN::Test() {
 //Test for class
 }
 
-Terrain::Terrain(int levels) {
+RTIN::RTIN(int levels) {
 	size = ( 2 << (levels + 1) ) - 1;
 	e_T = new float[size];
 	flags = new int[size];
 }
 
-Terrain::~Terrain() {
+RTIN::~RTIN() {
 	if (e_T != 0) {
 		delete [] e_T;
 	}
@@ -30,11 +30,11 @@ Terrain::~Terrain() {
 	}
 }
 
-int Terrain::Parent(int node) {
+int RTIN::Parent(int node) {
 	return (node - 1) >> 1;
 }
 
-int Terrain::Child(int child, int node) {
+int RTIN::Child(int child, int node) {
 	if (child == LEFT || child == RIGHT)
 		return (node << 1) + child;
 	return -1;

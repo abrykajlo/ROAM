@@ -4,11 +4,11 @@ enum child {LEFT = 1, RIGHT = 2};
 
 enum neighbor {L, R, B};
 
-class Terrain {
+class RTIN {
 public:
-	Terrain();
-	Terrain(int);
-	~Terrain();
+	RTIN();
+	RTIN(int);
+	~RTIN();
 	void Draw();
 	void Test();
 private:
