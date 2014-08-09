@@ -3,7 +3,6 @@
 // (301123551)
 
 #include "include/Angel.h"
-#include "include/GL/glui.h"
 
 #include "HeightMap.h"
 
@@ -56,13 +55,7 @@ mat4  model_view_obj, projection_obj;
 GLuint  ModelViewObj, ProjectionObj;
 
 //----------------------------------------------------------------------------
-
-//GLUI controls declarations
-GLUI *glui;		
-GLUI_EditText *savetext;	
-GLUI_EditText *loadtext;
-GLUI_Button *savebtn;	
-GLUI_Button *loadbtn;	
+	
 
 //String list to hold render options
 char *string_list[] = { (char*)"Flat Shaded", (char*)"Smooth Shaded", (char*)"Wireframe", (char*)"Shaded with Mesh Edges" };
@@ -312,52 +305,6 @@ int main(int argc, char *argv[]) {
 
     //Set background colour to grey
     glClearColor( 0.5f, 0.5f, 0.5f, 1.0f);
-
-    //Create bottom panel using GLUI
-    glui = GLUI_Master.create_glui_subwindow(main_window, GLUI_SUBWINDOW_BOTTOM);
-    glui->set_main_gfx_window(main_window);
-
-    //Add rotation ball
-    GLUI_Rotation *view_rot = new GLUI_Rotation(glui, "Rotate", view_rotate);
-    view_rot->set_spin(0.05);
-    new GLUI_Column(glui, false);
-
-    //Add zoom slider
-    GLUI_Translation *trans_y = new GLUI_Translation(glui, "Zoom", GLUI_TRANSLATION_Z, &obj_scale);
-    trans_y->set_speed(0.05);
-    new GLUI_Column(glui, false);
-
-    //Add translation x/y sliders
-    GLUI_Translation *trans_xy = new GLUI_Translation(glui, "Translate X/Y", GLUI_TRANSLATION_XY, pos);
-    trans_xy->set_speed(0.05);
-    new GLUI_Column(glui, false);
-
-    //Add translate z slider
-    GLUI_Translation *trans_z = new GLUI_Translation(glui, "Translate Z", GLUI_TRANSLATION_Z, &pos[2]);
-    trans_z->set_speed(0.05);
-    new GLUI_Column(glui, false);
-
-    //Add save file text field and button
-    new GLUI_StaticText(glui, "");
-    savetext = new GLUI_EditText(glui, "Save File:", GLUI_EDITTEXT_TEXT);
-    savebtn = new GLUI_Button(glui, "Save", SAVEID, control_cb);
-    new GLUI_Column(glui, false);
-
-    //Add load file text field and button
-    new GLUI_StaticText(glui, "");
-    loadtext = new GLUI_EditText(glui, "Open File:", GLUI_EDITTEXT_TEXT);
-    loadbtn = new GLUI_Button(glui, "Open", LOADID, control_cb);
-    new GLUI_Column(glui, false);
-
-    //Add list of rendering options
-    new GLUI_StaticText(glui, "");
-    GLUI_Listbox *list = new GLUI_Listbox(glui, "Mode:", &curr_string);
-    for(int i = 0; i < 4; i++) list->add_item(i, string_list[i]);
-    new GLUI_StaticText(glui, "");
-    
-    //Quit button
-    new GLUI_Button(glui, "Quit", 0,(GLUI_Update_CB)exit);
-
     //Main GLUT loop
     glutMainLoop();
     return 0;

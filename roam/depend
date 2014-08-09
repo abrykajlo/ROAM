@@ -1,5 +1,4 @@
-roam.o: roam.cpp /usr/include/stdc-predef.h \
- /usr/include/x86_64-linux-gnu/bits/predefs.h include/Angel.h \
+roam.o: roam.cpp /usr/include/stdc-predef.h include/Angel.h \
  /usr/include/c++/4.8/cmath \
  /usr/include/x86_64-linux-gnu/c++/4.8/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/4.8/bits/os_defines.h \
@@ -111,8 +110,7 @@ roam.o: roam.cpp /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/c++/4.8/bits/c++io.h \
  /usr/include/c++/4.8/bits/fstream.tcc
 InitShader.o: include/InitShader.cpp /usr/include/stdc-predef.h \
- /usr/include/x86_64-linux-gnu/bits/predefs.h include/Angel.h \
- /usr/include/c++/4.8/cmath \
+ include/Angel.h /usr/include/c++/4.8/cmath \
  /usr/include/x86_64-linux-gnu/c++/4.8/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/4.8/bits/os_defines.h \
  /usr/include/features.h /usr/include/x86_64-linux-gnu/sys/cdefs.h \
@@ -211,7 +209,6 @@ InitShader.o: include/InitShader.cpp /usr/include/stdc-predef.h \
  /usr/include/GL/freeglut_ext.h /usr/include/GL/freeglut_ext.h \
  include/vec.h include/mat.h
 HeightMap.o: HeightMap.cpp /usr/include/stdc-predef.h \
- /usr/include/x86_64-linux-gnu/bits/predefs.h \
  /usr/include/c++/4.8/iostream \
  /usr/include/x86_64-linux-gnu/c++/4.8/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/4.8/bits/os_defines.h \

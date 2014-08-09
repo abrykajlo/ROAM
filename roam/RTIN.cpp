@@ -11,12 +11,8 @@ RTIN::RTIN() {
 	IBO = 0;
 }
 
-void RTIN::Test() {
-//Test for class
-}
-
 RTIN::RTIN(int levels) {
-	size = ( 2 << (levels + 1) ) - 1;
+	size = ( 2 << levels ) - 1;
 	e_T = new float[size];
 	flags = new int[size];
 }
@@ -24,18 +20,44 @@ RTIN::RTIN(int levels) {
 RTIN::~RTIN() {
 	if (e_T != 0) {
 		delete [] e_T;
+		e_T = 0;
 	}
 	if (flags != 0) {
 		delete [] flags;
+		flags = 0;
 	}
 }
 
-int RTIN::Parent(int node) {
-	return (node - 1) >> 1;
+// void &RTIN::operator=(RTIN r) {
+// 	//check allocated memory
+// 	if (e_T != 0) {
+// 		delete [] e_T;
+// 		e_T = 0;
+// 	}
+
+// 	if (flags != 0) {
+// 		delete [] flags;
+// 		flags = 0;
+// 	}
+
+// 	size = r.size;
+// 	flags = r.flags;
+// 	e_T = r.e_T;
+// }
+
+void RTIN::Draw() {
+
 }
 
-int RTIN::Child(int child, int node) {
-	if (child == LEFT || child == RIGHT)
-		return (node << 1) + child;
-	return -1;
+int RTIN::Parent(int triangle) {
+	return (triangle - 1) >> 1;
+}
+
+int RTIN::Child(child c, int triangle) {
+		return (triangle << 1) + c;
+}
+
+//implement this
+int RTIN::Neighbor(neighbor n, int triangle) {
+	return 0;
 }
