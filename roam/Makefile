@@ -18,7 +18,7 @@ LIBDIR=/usr/lib
 
 # If you have more source files add them here 
 INPUT= roam.cpp
-SOURCE= $(INPUT) include/InitShader.cpp HeightMap.cpp
+SOURCE= $(INPUT) include/InitShader.cpp HeightMap.cpp RTIN.cpp
 
 # The compiler we are using 
 CC= g++

@@ -6,6 +6,8 @@
 
 #include "HeightMap.h"
 
+#include "RTIN.h"
+
 #include <iostream>
 #include <cstdlib>
 #include <cmath> 
@@ -13,6 +15,8 @@
 #include <vector>
 
 using namespace std;
+
+RTIN r;
 
 typedef Angel::vec4 point4;
 typedef Angel::vec3 point3;
@@ -28,7 +32,7 @@ float obj_scale  = 75.0;
 //---------------------------------------------------------------------------
 
 GLuint m_vaoID; //Vertex array
-GLuint m_vboID; //Vertex buffer
+GLuint VBO; //Vertex buffer
 
 //Maximum number of faces: 50000
 const int NumVertices_Obj = 5000000*3; 
@@ -44,8 +48,8 @@ unsigned int vertex_count = 0;
 unsigned int face_count = 0;
 
 //Arrays to hold final vertices and normals
-point4 obj_points[NumVertices_Obj];
-vec3 obj_normals[NumVertices_Obj];
+// point4 r.vertexBuffer[NumVertices_Obj];
+// vec3 r.normalBuffer[NumVertices_Obj];
 
 // Program for transformations
 GLuint obj_program;
@@ -88,8 +92,7 @@ void display(void) {
     mat4 instance = ( Translate( pos[0], pos[1], pos[2] ) * Scale( obj_scale ) );
     glUniformMatrix4fv(ModelViewObj, 1, GL_TRUE, model_view_obj * instance);
 
-    glDrawArrays(GL_TRIANGLES, 0, NumVertices_Obj);
-
+    r.Draw();
     glBindVertexArray(0);
 
     glutSwapBuffers();
@@ -99,20 +102,26 @@ void display(void) {
 
 void init(void) {
     // Create vertex array object
-    glGenVertexArrays(1, &m_vaoID);
+    // glGenVertexArrays(1, &m_vaoID);
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // Create and initialize buffer object
-    glBindVertexArray(m_vaoID);
-
+    // glBindVertexArray(m_vaoID);
+    cout << "1";
+    r.Init();
+    // r.flags[1] = 1;
+    // r.flags[2] = 1;
     // Pass in array of vertices (points) and normals to buffer
-    glGenBuffers(1, &m_vboID);
-    glBindBuffer( GL_ARRAY_BUFFER, m_vboID);
-    glBufferData( GL_ARRAY_BUFFER, sizeof(obj_points) + sizeof(obj_normals), NULL, GL_STATIC_DRAW );
-    glBufferSubData( GL_ARRAY_BUFFER, 0, sizeof(obj_points), obj_points );
-    glBufferSubData( GL_ARRAY_BUFFER, sizeof(obj_points), sizeof(obj_normals), obj_normals );
+    glGenBuffers(1, &r.VBO);
+    glBindBuffer( GL_ARRAY_BUFFER, r.VBO);
+    glBufferData( GL_ARRAY_BUFFER, sizeof(r.vertexBuffer) + sizeof(r.normalBuffer), NULL, GL_STATIC_DRAW );
+    glBufferSubData( GL_ARRAY_BUFFER, 0, sizeof(r.vertexBuffer), r.vertexBuffer );
+    glBufferSubData( GL_ARRAY_BUFFER, sizeof(r.vertexBuffer), sizeof(r.normalBuffer), r.normalBuffer );
 
+    glGenBuffers(1, &r.IBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, r.IBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(r.indexBuffer), r.indexBuffer, GL_STATIC_DRAW);
     // Load shaders and use the resulting shader program
     obj_program = InitShader("vshader.glsl", "fshader.glsl");
     glUseProgram(obj_program);
@@ -123,7 +132,7 @@ void init(void) {
     glVertexAttribPointer( vPosition_Obj, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0) );
     GLuint vNormal = glGetAttribLocation(obj_program, "vNormal"); 
     glEnableVertexAttribArray(vNormal);
-    glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(obj_points)) );
+    glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(r.vertexBuffer)) );
 
     // Initialize shader lighting parameters
     point4 light_position(0.0, 0.0, 2.0, 0.0);
@@ -218,97 +227,6 @@ void control_cb(int control) {
 //----------------------------------------------------------------------------
 
 int main(int argc, char *argv[]) {
-
-    HeightMap height_vals("heightmap513px.bmp", 0.5);
-
-    int MaxLevel = 9; //Level 9 results in one vertex per pixel for 513x513
-
-    int granularity = pow(2,MaxLevel);
-    int w = granularity+1;
-    int h = granularity+1;
-    int levels = 1+(2*MaxLevel);
-
-    //Calculation of vertices
-    for (int i = 0; i < h; ++i) {
-        for (int j = 0; j < w; ++j) {
-            point4 new_vertex;
-            new_vertex.x = -1.0+((j/((w-1)*1.0))*2.0);
-            new_vertex.y = -1.0+((i/((h-1)*1.0))*2.0);
-            new_vertex.z = height_vals(new_vertex.x, new_vertex.y); //Height value
-            new_vertex.w = 1;
-            vertex_list.push_back(new_vertex);
-        }
-    }
-
-    //Root square with two initial triangles:
-    point3 new_face1;
-    point3 new_face2;
-
-    new_face1.x = 0; //top left
-    new_face1.y = (w*h)-1; //bottom right
-    new_face1.z = w-1; //top right
-    
-    new_face2.x = (w*h)-1; //bottom right
-    new_face2.y = 0; //top left
-    new_face2.z = (h-1)*w; //bottom left
-
-    face_list.push_back(new_face1);
-    face_list.push_back(new_face2);
-
-    levels--;
-
-    //Build all sub triangles for all triangles in face list (goes by levels)
-    int i = 0;
-    for (int currlevel = 0; currlevel < levels; currlevel++) {
-        int limit = face_list.size();
-        while (i < limit) {
-            point3 new_face3;
-            point3 new_face4;
-
-            new_face3.x = face_list[i].z;
-            new_face3.y = face_list[i].x;
-            new_face3.z = (face_list[i].x + face_list[i].y)/2;
-            
-            new_face4.x = face_list[i].y;
-            new_face4.y = face_list[i].z;
-            new_face4.z = (face_list[i].x + face_list[i].y)/2;
-
-            face_list.push_back(new_face3);
-            face_list.push_back(new_face4);
-
-            i++;
-        }
-    }
-
-    //Truncate face_list to just last level of faces
-    //vector<point3> new_face_list(face_list.end()-((granularity*granularity)*2), face_list.end());
-    //face_list = new_face_list;
-
-    //Set vertex and face count
-    vertex_count = vertex_list.size();
-    face_count = face_list.size();
-
-    //Iterate through face list to build new vertex list in triangle pattern
-    for (unsigned int i = 0; i < face_count; i++) {
-    	//Build triangle based on indices of vertices from face list
-        point4 c = vertex_list[(int)face_list[i].x];
-        point4 b = vertex_list[(int)face_list[i].y];
-        point4 a = vertex_list[(int)face_list[i].z];
-
-        //Push vertices of triangle on to final vertex (point) list
-        obj_points[(i*3)] = a;
-        obj_points[(i*3)+1] = b;
-        obj_points[(i*3)+2] = c;    
-
-        //Calculate normal of face using vertices of the triangle
-        vec3 normal = normalize( cross(b - a, c - b) );
-        norm_list.push_back(normal);
-
-        //Push normals of each face on to final normal list, with redundancy to match length of vertex list
-        obj_normals[(i*3)] = normal;
-        obj_normals[(i*3)+1] = normal;
-        obj_normals[(i*3)+2] = normal;
-    }
 
     //GLUT initializations
     glutInit( &argc, argv );
