@@ -281,8 +281,8 @@ int main(int argc, char *argv[]) {
     }
 
     //Truncate face_list to just last level of faces
-    vector<point3> new_face_list(face_list.end()-((granularity*granularity)*2), face_list.end());
-    face_list = new_face_list;
+    //vector<point3> new_face_list(face_list.end()-((granularity*granularity)*2), face_list.end());
+    //face_list = new_face_list;
 
     //Set vertex and face count
     vertex_count = vertex_list.size();
