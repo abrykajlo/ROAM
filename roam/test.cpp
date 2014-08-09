@@ -5,8 +5,15 @@
 using namespace std;
 
 int main() {
-	RTIN terrain(10);
-	cout << terrain.Neighbor(L, 12) << endl;
+	RTIN terrain(4);
+	terrain.flags[1] = 1;
+	terrain.flags[2] = 1;
+	terrain.ForceSplit(2);
+	terrain.ForceSplit(4);
+	terrain.ForceSplit(9);
+	for (int i = 0; i < terrain.size; i++) {
+		cout << terrain.flags[i] << endl;
+	}
 
 	// terrain = RTIN(1);
 	// cout << "test 2 ";

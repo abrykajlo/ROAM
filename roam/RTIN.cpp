@@ -114,3 +114,26 @@ int RTIN::Neighbor(neighbor n, int triangle) {
 	}
 	return 0;
 }
+
+void RTIN::ForceSplit(int triangle) {
+	int baseNeighbor = Neighbor(B, triangle);
+	if (baseNeighbor == -1) { 
+		Split(triangle);
+	} else if (flags[baseNeighbor]) {
+		Split(baseNeighbor);
+		Split(triangle);
+	} else {
+		int baseNeighborParent = Parent(baseNeighbor);
+		ForceSplit(baseNeighborParent);
+		Split(baseNeighbor);
+		Split(triangle);
+	}
+}
+
+void RTIN::Split(int triangle) {
+	flags[triangle] = 0;
+	int left = Child(LEFT, triangle);
+	int right = Child(RIGHT, triangle);
+	flags[left] = 1;
+	flags[right] = 1;
+}

@@ -17,7 +17,9 @@ public:
 	int Parent(int);
 	int Child(child, int);
 	int Neighbor(neighbor, int);
-	int ForceSplit(int);
+	void ForceSplit(int);
+	
+	void Split(int);
 	int * flags;
 	float * e_T;
 	int size;
