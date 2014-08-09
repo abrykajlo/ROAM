@@ -28,22 +28,24 @@ RTIN::~RTIN() {
 	}
 }
 
-// void &RTIN::operator=(RTIN r) {
-// 	//check allocated memory
-// 	if (e_T != 0) {
-// 		delete [] e_T;
-// 		e_T = 0;
-// 	}
+RTIN &RTIN::operator=(RTIN r) {
+	//check allocated memory
+	if (e_T != 0) {
+		delete [] e_T;
+		e_T = 0;
+	}
 
-// 	if (flags != 0) {
-// 		delete [] flags;
-// 		flags = 0;
-// 	}
+	if (flags != 0) {
+		delete [] flags;
+		flags = 0;
+	}
 
-// 	size = r.size;
-// 	flags = r.flags;
-// 	e_T = r.e_T;
-// }
+	this->size = r.size;
+	this->flags = r.flags;
+	this->e_T = r.e_T;
+
+	return *this;
+}
 
 void RTIN::Draw() {
 
@@ -57,7 +59,58 @@ int RTIN::Child(child c, int triangle) {
 		return (triangle << 1) + c;
 }
 
-//implement this
+//a result of -1 means there is no neighbor
 int RTIN::Neighbor(neighbor n, int triangle) {
+	if (triangle == 0) {
+		return -1;
+	} else if (triangle == 1) {
+		if (n == B)
+			return 2;
+		else
+			return -1;
+	} else if (triangle == 2) {
+		if (n == B)
+			return 1;
+		else
+			return -1;
+	} else {
+		int parent = Parent(triangle);
+		int nParent; //parents neighbor
+		if (n == B) {
+			if (triangle % 2 == 0) {
+				nParent = Neighbor(R, parent);
+				if (nParent == -1) {
+					return -1;
+				}
+				return Child(LEFT, nParent);
+			} else {
+				nParent = Neighbor(L, parent);
+				if (nParent == -1) {
+					return -1;
+				}
+				return Child(RIGHT, nParent);
+			}
+		} else if (n == L) {
+			if (triangle % 2 == 0) {
+				nParent = Neighbor(B, parent);
+				if (nParent == -1) {
+					return -1;
+				}
+				return Child(LEFT, nParent);
+			} else {
+				return Child(RIGHT, parent);
+			}
+		} else if (n == R) {
+			if (triangle % 2 == 0) {
+				return Child(LEFT, parent);
+			} else {
+				nParent = Neighbor(B, parent);
+				if (nParent == -1) {
+					return -1;
+				}
+				return Child(RIGHT, nParent);
+			}
+		}
+	}
 	return 0;
 }

@@ -11,7 +11,7 @@ public:
 	RTIN();
 	RTIN(int);
 	~RTIN();
-	void operator=(RTIN);
+	RTIN &operator=(RTIN);
 	void Draw();
 //temporary for unit testing private:
 	int Parent(int);
