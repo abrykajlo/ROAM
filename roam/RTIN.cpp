@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <cmath>
 #include "RTIN.h"
 #include "HeightMap.h"
 
@@ -11,12 +12,6 @@ RTIN::RTIN() {
 	// flags = 0;
 	// VBO = 0;
 	// IBO = 0;
-}
-
-RTIN::RTIN(int levels) {
-	size = ( 2 << levels ) - 1;
-	e_T = new float[size];
-	flags = new int[size];
 }
 
 RTIN::~RTIN() {
@@ -50,17 +45,32 @@ RTIN &RTIN::operator=(RTIN r) {
 }
 
 void RTIN::Draw() {
+	cout << "Before bind" << endl;
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+	cout << "After bind" << endl;
 	DrawTriangle(0);
+	cout << "After root recursed" << endl;
 }
 
 void RTIN::Init() {
-	RTIN(9);
-	cout << "hello";
+	cout << "Enter RTIN init" << endl;
+
+	int levels = 3;
+	//RITN(9)
+	size = 0;
+	for (int i = 0; i <= levels; ++i) {
+		size += pow(2, i)*pow(2, i)*2;
+	}
+	size++; //For empty root
+	e_T = new float[size];
+	flags = new int[size];
+
+	cout << "After RTIN constructor" << endl;
 	Triangulate();
+	cout << "After Triangulate" << endl;
 	glGenBuffers(1, &IBO);
- glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
- glBufferData(GL_ELEMENT_ARRAY_BUFFER,  sizeof(indexBuffer), indexBuffer, GL_STATIC_DRAW);
+ 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+ 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indexBuffer), indexBuffer, GL_STATIC_DRAW);
 }
 
 int RTIN::Parent(int triangle) {
@@ -181,7 +191,7 @@ void RTIN::Triangulate() {
 	vector<point4> vertex_list;
 	vector<face> face_list;
 
-    int MaxLevel = 9; //Level 9 results in one vertex per pixel for 513x513
+    int MaxLevel = 3; //Level 9 results in one vertex per pixel for 513x513
 
     int granularity = pow(2,MaxLevel);
     int w = granularity+1;
@@ -199,6 +209,7 @@ void RTIN::Triangulate() {
             vertex_list.push_back(new_vertex);
         }
     }
+    cout << "Vertex list populated" << endl;
 
     //Root square with two initial triangles:
     face new_face1;
@@ -239,42 +250,58 @@ void RTIN::Triangulate() {
             i++;
         }
     }
+
+    cout << "Face list populated" << endl;
+
     vertexBuffer = new point4[vertex_list.size()];
-    for (int i = 0; i < vertex_list.size(); i++) {
+    for (unsigned int i = 0; i < vertex_list.size(); i++) {
     	vertexBuffer[i] = vertex_list[i];
     }
+    cout << "Vertex buffer created" << endl;
+
     indexBuffer = new GLuint[face_list.size() * 3];
-    normalBuffer = new vec3[vertex_list.size()];
-
-    for (int i = 0; i < vertex_list.size(); i++) {
-    	normalBuffer[i] = vec3(0.0,0.0,0.0);
-    }
-
-    for (int i = 0; i < face_list.size(); i++) {
+    for (unsigned int i = 0; i < face_list.size(); i++) {
     	indexBuffer[3*i] = face_list[i].x;
     	indexBuffer[3*i+1] = face_list[i].y;
     	indexBuffer[3*i+2] = face_list[i].z;
+    }
+    cout << "Index buffer created" << endl;
+
+    normalBuffer = new vec3[vertex_list.size()];
+    for (unsigned int i = 0; i < vertex_list.size(); i++) {
+    	normalBuffer[i] = vec3(0.0,0.0,0.0);
+    }
+    for (unsigned int i = 0; i < face_list.size(); i++) {
     	point4 c = vertex_list[face_list[i].x];
         point4 b = vertex_list[face_list[i].y];
         point4 a = vertex_list[face_list[i].z];
         vec3 normal = normalize( cross(b - a, c - b) );
-        normalBuffer[(i*3)] += normal;
-        normalBuffer[(i*3)+1] += normal;
-        normalBuffer[(i*3)+2] += normal;
+        normalBuffer[face_list[i].x] += normal;
+        normalBuffer[face_list[i].y] += normal;
+        normalBuffer[face_list[i].z] += normal;
     }
-
-    for (int i = 0; i < vertex_list.size(); i++) {
+    for (unsigned int i = 0; i < vertex_list.size(); i++) {
     	normalBuffer[i] = normalize( normalBuffer[i] );
     }
+    cout << "Normal buffer created" << endl;
 }
 
 void RTIN::DrawTriangle(int triangle) {
+	//if (triangle >= 0) cout << "Draw triangle entered for " << triangle << endl;
+	//if (triangle >= 0) cout << "flags[" << triangle << "]: " << flags[triangle] << endl;
 	if (flags[triangle] == 1) {
-		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT,(void*)(sizeof(GLuint)*(triangle-1)));
+		cout << "Flagged to draw triangle " << triangle << endl;
+		int index = ((triangle*3)-3);
+		for (int i = 0; i < 3; ++i) cout << "Vertex " << i+1 << ": " << indexBuffer[index+i] << endl;
+		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT,(void*)(sizeof(GLuint)*index));
+		cout << "Triangle " << triangle << " drawn" << endl;
 	} else {
 		int left = Child(LEFT, triangle);
 		int right = Child(RIGHT, triangle);
-		DrawTriangle(left);
-		DrawTriangle(right);
+		if (left >= 0 && right >= 0) {
+			cout << "Consider children: " << left << " & " << right << endl;
+			DrawTriangle(left);
+			DrawTriangle(right);
+		}
 	}
 }
