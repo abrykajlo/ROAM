@@ -1,4 +1,4 @@
-#include "Mesh.h"
+#include "RTIN.h"
 #include "include/Angel.h"
 #include <iostream>
 #include <string.h>
@@ -9,13 +9,12 @@ float xy_aspect;
 int   last_x, last_y;
 float rotationX = 0.0, rotationY = 0.0;
 
-int   render_options = WIREFRAME;
 int   main_window;
 float scale = 1.0;
 float view_rotate[16] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
 float obj_pos[] = { 0.0, 0.0, -2.0 };
 char* filename;
-Mesh mesh;
+RTIN r;
 
 GLUI *glui;
 GLUI_EditText *textbox;
@@ -35,47 +34,12 @@ GLfloat light0_ambient[] =  {0.5f, 0.5f, 0.5f, 1.0f};
 GLfloat light0_diffuse[] =  {.5f, .5f, .5f, 1.0f};
 GLfloat light0_position[] = {-1.0f, 1.0f, 1.0f, 0.0f};
 
-
-void control_cb( int control )
-{
-	if (control == LOAD_ID) {
-		mesh.loadMesh(textbox->get_text());
-		obj_pos[0] = 0.0;
-		obj_pos[1] = 0.0;
-		obj_pos[2] = -2.0;
-    k_value->set_int_limits(0, mesh.getNumVerts() + mesh.getNumFaces() - 2);
-	} else if (control == SAVE_ID) {
-    if (mesh.getNumVerts() != 0) { 
-	   	mesh.saveMesh(textbox->get_text());
-    }
-	} else if (control == RADIO_ID) {
-
-    int option = radio->get_int_val();
-    if (option == 0) {
-      render_options = WIREFRAME;
-    } else if (option == 1) {
-      render_options = WIREFRAME | FLAT;
-    } else if (option == 2) {
-      render_options = FLAT;
-    } else if (option == 3) {
-      render_options = SMOOTH;
-    }
-
-	} else if (control == DECIM_ID) {
-    if (mesh.getNumVerts() != 0) {
-    int k = k_value->get_int_val();
-    int d = num_edges->get_int_val();
-    while (d != 0) {
-      mesh.decimate(k, 1);
-      d--;
-    }
-    k_value->set_int_limits(0, mesh.getNumVerts() + mesh.getNumFaces());
+void init() {
+  r.Triangulate("heightmap.bmp", 10);
+  std::cout << r.size << std::endl;
+  for (int i = 0; i < r.size; i++) {
+    if (r.Child(LEFT, i) == -1) r.flags[i] = 1;
   }
-  } else if (K_ID) {
-    num_edges->set_int_limits(0, k_value->get_int_val());
-  }
-
-  glutPostRedisplay();
 }
 
 
@@ -156,13 +120,14 @@ void myGlutDisplay( void )
   
   glScalef( scale, scale, scale );
   
-  mesh.drawMesh(render_options);
+  r.Draw();
   glutSwapBuffers(); 
 }
 
 
 int main(int argc, char* argv[])
 {
+  init();
   glutInit(&argc, argv);
   glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
   glutInitWindowPosition( 50, 50 );
@@ -205,33 +170,7 @@ int main(int argc, char* argv[])
   GLUI_Translation *trans_z = 
     new GLUI_Translation( glui, "Zoom", GLUI_TRANSLATION_Z, &obj_pos[2] );
   trans_z->set_speed( .005 );
-  new GLUI_Column( glui, false );
-  radio = new GLUI_RadioGroup( glui, NULL, RADIO_ID, control_cb );
-  glui->add_radiobutton_to_group(radio, "wireframe");
-  glui->add_radiobutton_to_group(radio, "flat with wireframe");
-  glui->add_radiobutton_to_group(radio, "flat shading");
-  glui->add_radiobutton_to_group(radio, "smooth");
-  new GLUI_Column( glui, false );
-  textbox = new GLUI_EditText( glui, "", GLUI_EDITTEXT_TEXT );
-  new GLUI_Button( glui, "Save", SAVE_ID, control_cb );
   
-  new GLUI_Button( glui, "Load", LOAD_ID, control_cb );
-  
-  new GLUI_Column(glui,false);
-
-  k_value = new GLUI_Spinner( glui, "k value", GLUI_SPINNER_INT, K_ID, control_cb);
-
-  num_edges = new GLUI_Spinner( glui, "num edges", GLUI_SPINNER_INT);
-
-  k_value->set_int_limits(0, 0);
-
-  num_edges->set_int_limits(0, 0);
-
-  new GLUI_Button( glui, "Decimate", DECIM_ID, control_cb );
-
-  new GLUI_Column(glui, false);
-  new GLUI_Button( glui, "Quit", 0,(GLUI_Update_CB)exit );
-
   glutPostRedisplay();
   
   glutMainLoop();
