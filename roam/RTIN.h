@@ -15,6 +15,8 @@ public:
 	~RTIN();
 	RTIN &operator=(RTIN);
 	void Draw();
+	void BuildWedgies();
+	void WedgieTreePrint();
 	void Init();
 //temporary for unit testing private:
 	int Parent(int);
@@ -35,4 +37,5 @@ public:
 	GLuint * indexBuffer;
 	GLuint VBO;
 	GLuint IBO;
+	int MaxLevel;
 };

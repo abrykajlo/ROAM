@@ -74,7 +74,7 @@ int   curr_string = 0; //String list index
 //----------------------------------------------------------------------------
 
 void display(void) {
-    cout << "Display started" << endl;
+    //cout << "Display started" << endl;
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     glBindVertexArray(m_vaoID);
@@ -93,9 +93,7 @@ void display(void) {
     mat4 instance = ( Translate( pos[0], pos[1], pos[2] ) * Scale( obj_scale ) );
     glUniformMatrix4fv(ModelViewObj, 1, GL_TRUE, model_view_obj * instance);
 
-    cout << "Before draw" << endl;
-    r.Draw();
-    cout << "After draw" << endl;
+    r.Draw(); //Issues with DrawTriangles
 
     glBindVertexArray(0);
 
@@ -112,9 +110,9 @@ void init(void) {
 
     // Create and initialize buffer object
     // glBindVertexArray(m_vaoID);
-    cout << "Before init RTIN" << endl;
+    //cout << "Before init RTIN" << endl;
     r.Init();
-    cout << "After init RTIN" << endl;
+    //cout << "After init RTIN" << endl;
     r.flags[1] = 1;
     r.flags[2] = 1;
     // Pass in array of vertices (points) and normals to buffer
@@ -233,7 +231,7 @@ void control_cb(int control) {
 
 int main(int argc, char *argv[]) {
 
-    cout << "Start" << endl;
+    //cout << "Start" << endl;
 
     //GLUT initializations
     glutInit( &argc, argv );
@@ -244,15 +242,15 @@ int main(int argc, char *argv[]) {
     glutInitContextProfile( GLUT_CORE_PROFILE );
     main_window = glutCreateWindow( "SMF Viewer" );
 
-    cout << "Glut initialized" << endl;
+    //cout << "Glut initialized" << endl;
 
     //Main init
     glewInit();     
-    cout << "Glew initialized" << endl;   
+    //cout << "Glew initialized" << endl;   
 
     init();
 
-    cout << "RTIN initialized" << endl;
+    //cout << "RTIN initialized" << endl;
 
     //GLUT function binds
     glutDisplayFunc(display);
@@ -263,7 +261,7 @@ int main(int argc, char *argv[]) {
     //Set background colour to grey
     glClearColor( 0.5f, 0.5f, 0.5f, 1.0f);
 
-    cout << "Misc Glut init" << endl;
+    //cout << "Misc Glut init" << endl;
 
     //Create bottom panel using GLUI
     glui = GLUI_Master.create_glui_subwindow(main_window, GLUI_SUBWINDOW_BOTTOM);
@@ -310,7 +308,7 @@ int main(int argc, char *argv[]) {
     //Quit button
     new GLUI_Button(glui, "Quit", 0,(GLUI_Update_CB)exit);
 
-    cout << "Glui created" << endl;
+    //cout << "Glui created" << endl;
     //Main GLUT loop
     glutMainLoop();
 
