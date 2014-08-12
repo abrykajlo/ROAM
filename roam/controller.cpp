@@ -6,19 +6,17 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
-
-
+#include <linux/kernel.h>
+#define __KERNEL__
+#include "xpad.h"
 #include <iostream>
 using namespace std;
 
 int main() {
 	int controller = open("/dev/input/js0", O_NONBLOCK);
-	char name[100];
-	name[99] = '\0';
-	while (1) {
-	read(controller, (void*)name, 99);
-	cout << name;
-}
+	struct usb_xpad x;
+	int err = read(controller, &x, sizeof(struct usb_xpad));
+	cout << x.phys;
 	return 0;
 }
 

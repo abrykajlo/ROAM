@@ -17,8 +17,7 @@ INCLUDEDIR=/usr/include/
 LIBDIR=/usr/lib
 
 # If you have more source files add them here 
-INPUT= roam.cpp
-SOURCE= $(INPUT) include/InitShader.cpp HeightMap.cpp RTIN.cpp
+SOURCE= roam.cpp include/InitShader.cpp RTIN.cpp HeightMap.cpp
 
 # The compiler we are using 
 CC= g++
@@ -26,31 +25,27 @@ CC= g++
 # The flags that will be used to compile the object file.
 # If you want to debug your program,
 # you can add '-g' on the following line
-CFLAGS= -O3 -g -Wall -pedantic -DGL_GLEXT_PROTOTYPES
-	
+CFLAGS= -O3 -g -pedantic -DGL_GLEXT_PROTOTYPES
+
 # The name of the final executable 
-EXECUTABLE= $(basename $(INPUT))
+EXECUTABLE=roam
 
 # The basic library we are using add the other libraries you want to link
 # to your program here 
 
 # Linux (default)
-ifeq ($(OS),Windows_NT)
-	LDFLAGS = -lopengl32 -lfreeglut -lglew32 -Wl,--subsystem,windows
-else
-	LDFLAGS = -lGL -lglut -lGLEW -lGLU -lXmu -lXext -lX11 -lXi -lm -L./lib/ -lglui
-endif
+LDFLAGS = -lGL -lglut -lGLEW -lXext -lX11 -lm -L./lib -lglui -lGLU
 
 # If you have other library files in a different directory add them here 
-INCLUDEFLAG= -I. -I$(INCLUDEDIR) -Iinclude/
+INCLUDEFLAG= -I. -I$(INCLUDEDIR) -Iinclude/ -I./include
 LIBFLAG= -L$(LIBDIR)
 
 # Don't touch this one if you don't know what you're doing 
 OBJECT= $(SOURCE:.cpp=.o)
 
 # Don't touch any of these either if you don't know what you're doing 
-all: $(OBJECT) depend
-	$(CC) $(CFLAGS) $(INCLUDEFLAG) $(LIBFLAG) $(OBJECT) -o $(EXECUTABLE) $(LDFLAGS)
+roam: $(OBJECT) depend
+	$(CC) $(CFLAGS) $(INCLUDEFLAG) $(LIBFLAG) $(OBJECT) -o $(EXECUTABLE) $(LDFLAGS) 
 
 depend:
 	$(CC) -M $(SOURCE) > depend
@@ -61,13 +56,7 @@ $(OBJECT):
 clean_object:
 	rm -f $(OBJECT)
 
-
-ifeq ($(OS),Windows_NT)
-clean:
-	rm -f $(OBJECT) depend $(EXECUTABLE).exe
-else
 clean:
 	rm -f $(OBJECT) depend $(EXECUTABLE)
-endif
 
 include depend

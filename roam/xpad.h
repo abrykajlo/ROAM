@@ -20,11 +20,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
- 
+#include <inttypes.h>
+
 #ifndef __XPAD_h
 #define __XPAD_h
 
-
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t dma_addr_t;
 /*********** ioctl stuff, can be used outside of the driver ***********/
 #define USB_XPAD_IOC_MAGIC 	'x'
 
@@ -41,7 +44,7 @@
 #ifdef __KERNEL__
 
 #include <linux/input.h>
-#include <linux/circ_buf.h>
+//#include <linux/circ_buf.h>
 
 /****************** driver description and version ********************/
 #define DRIVER_VERSION		"v0.1.7"

@@ -1,318 +1,208 @@
-// ROAM Project
-// Adam Brykajlo & Jon Holmes (301123551)
-
-#include "include/Angel.h"
-#include "include/GL/glui.h"
-
-#include "HeightMap.h"
-
 #include "RTIN.h"
-
+#include "include/Angel.h"
+#include <string>
 #include <iostream>
-#include <cstdlib>
-#include <cmath> 
-#include <fstream>
-#include <vector>
+#include <stdlib.h>
+#include <GL/glui.h>
 
-using namespace std;
 
+float xy_aspect;
+int   last_x, last_y;
+float rotationX = 0.0, rotationY = 0.0;
+
+int   main_window;
+float scale = 1.0;
+mat4 view_rotate = mat4(1.0);
+float obj_pos[] = { 0.0, 0.0, -2.0 };
+char* filename;
+vec4 eye_pos = vec4(0.0, 0.0, 0.0, 1.0);
+vec4 eye_dir = vec4(0.1, 0.0, 0.0, 0.0);
 RTIN r;
 
-typedef Angel::vec4 point4;
-typedef Angel::vec3 point3;
-typedef Angel::vec4 color4;
+GLUI *glui;
+GLUI_EditText *textbox;
+GLUI_Spinner *k_value;
+GLUI_Spinner *num_edges;
+GLUI_RadioGroup *radio;
 
-//---------------------------------------------------------------------------
 
-//Variables for transforming loaded object
-GLfloat pos[3] = {0.0};
-float view_rotate[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
-float obj_scale  = 75.0;
+#define LOAD_ID              305
+#define SAVE_ID              306
+#define RADIO_ID             307 
+#define DECIM_ID             308
+#define K_ID                 309
+#define EDGES_ID             310
 
-//---------------------------------------------------------------------------
+GLfloat light0_ambient[] =  {0.5f, 0.5f, 0.5f, 1.0f};
+GLfloat light0_diffuse[] =  {.5f, .5f, .5f, 1.0f};
+GLfloat light0_position[] = {-1.0f, 1.0f, 1.0f, 0.0f};
 
-GLuint m_vaoID; //Vertex array
-GLuint VBO; //Vertex buffer
-
-//Maximum number of faces: 50000
-const int NumVertices_Obj = 5000000*3; 
-
-//Int ID for main window
-int   main_window;
-
-//Declarations for parsing SMF files
-vector<point4> vertex_list;
-vector<point3> face_list;
-vector<vec3> norm_list;
-unsigned int vertex_count = 0;
-unsigned int face_count = 0;
-
-//Arrays to hold final vertices and normals
-// point4 r.vertexBuffer[NumVertices_Obj];
-// vec3 r.normalBuffer[NumVertices_Obj];
-
-// Program for transformations
-GLuint obj_program;
-
-// Shader transformation matrices
-mat4  model_view_obj, projection_obj;
-GLuint  ModelViewObj, ProjectionObj;
-
-//----------------------------------------------------------------------------
-
-//GLUI controls declarations
-// GLUI *glui;		
-// GLUI_EditText *savetext;	
-// GLUI_EditText *loadtext;
-// GLUI_Button *savebtn;	
-// GLUI_Button *loadbtn;	
-
-//String list to hold render options
-char *string_list[] = { (char*)"Flat Shaded", (char*)"Smooth Shaded", (char*)"Wireframe", (char*)"Shaded with Mesh Edges" };
-int   curr_string = 0; //String list index
-
-//----------------------------------------------------------------------------
-
-void display(void) {
-    cout << "Display started" << endl;
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
-    glBindVertexArray(m_vaoID);
-    glUseProgram(obj_program);
-
-    //Start with elementary matrix
-    model_view_obj = mat4 (1.0); 
-
-    //Transform model view of object based on rotation
-    model_view_obj *= mat4( view_rotate[0],view_rotate[1],view_rotate[2],view_rotate[3],
-                    		view_rotate[4],view_rotate[5],view_rotate[6],view_rotate[7],
-                    		view_rotate[8],view_rotate[9],view_rotate[10],view_rotate[11],
-                    		view_rotate[12],view_rotate[13],view_rotate[14],view_rotate[15]	);
-
-    //Transform model view based on translation and scale
-    mat4 instance = ( Translate( pos[0], pos[1], pos[2] ) * Scale( obj_scale ) );
-    glUniformMatrix4fv(ModelViewObj, 1, GL_TRUE, model_view_obj * instance);
-
-    cout << "Before draw" << endl;
-    r.Draw();
-    cout << "After draw" << endl;
-
-    glBindVertexArray(0);
-
-    glutSwapBuffers();
+void init(int levels) {
+  r.Triangulate("heightmap.bmp", levels);
+  std::cout << r.size << std::endl;
+  r.flags[1] = 1;
+  r.flags[2] = 1;
+  r.ForceSplit(1);
+  r.ForceSplit(5);
+  r.ForceSplit(12);
+  r.Merge(12);
+  // for (int i = 0; i < r.size; i++) {
+  //   if (r.Child(LEFT, i) == -1) r.flags[i] = 1;
+  // }
+  r.BuildWedgies();
+  r.SetEye(&eye_pos, &eye_dir);
+  //r.WedgieTreePrint();
 }
 
-//----------------------------------------------------------------------------
-
-void init(void) {
-    // Create vertex array object
-    // glGenVertexArrays(1, &m_vaoID);
-
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-    // Create and initialize buffer object
-    // glBindVertexArray(m_vaoID);
-    cout << "Before init RTIN" << endl;
-    r.Init();
-    cout << "After init RTIN" << endl;
-    r.flags[1] = 1;
-    r.flags[2] = 1;
-    // Pass in array of vertices (points) and normals to buffer
-    glGenBuffers(1, &r.VBO);
-    glBindBuffer( GL_ARRAY_BUFFER, r.VBO);
-    glBufferData( GL_ARRAY_BUFFER, sizeof(r.vertexBuffer) + sizeof(r.normalBuffer), NULL, GL_STATIC_DRAW );
-    glBufferSubData( GL_ARRAY_BUFFER, 0, sizeof(r.vertexBuffer), r.vertexBuffer );
-    glBufferSubData( GL_ARRAY_BUFFER, sizeof(r.vertexBuffer), sizeof(r.normalBuffer), r.normalBuffer );
-
-    glGenBuffers(1, &r.IBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, r.IBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(r.indexBuffer), r.indexBuffer, GL_STATIC_DRAW);
-    // Load shaders and use the resulting shader program
-    obj_program = InitShader("vshader.glsl", "fshader.glsl");
-    glUseProgram(obj_program);
-    
-    // Set up vertex arrays
-    GLuint vPosition_Obj = glGetAttribLocation(obj_program, "vPosition");
-    glEnableVertexAttribArray(vPosition_Obj);
-    glVertexAttribPointer( vPosition_Obj, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0) );
-    GLuint vNormal = glGetAttribLocation(obj_program, "vNormal"); 
-    glEnableVertexAttribArray(vNormal);
-    glVertexAttribPointer( vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(r.vertexBuffer)) );
-
-    // Initialize shader lighting parameters
-    point4 light_position(0.0, 0.0, 2.0, 0.0);
-    color4 light_ambient(0.2, 0.2, 0.2, 1.0);
-    color4 light_diffuse(1.0, 1.0, 1.0, 1.0);
-    color4 light_specular(1.0, 1.0, 1.0, 1.0);
-
-    color4 material_ambient(0.0, 0.2, 0.8, 1.0);
-    color4 material_diffuse(0.0, 0.8, 0.2, 1.0);
-    color4 material_specular(0.0, 0.2, 0.8, 1.0);
-    float  material_shininess = 5.0;
-
-    color4 ambient_product = light_ambient * material_ambient;
-    color4 diffuse_product = light_diffuse * material_diffuse;
-    color4 specular_product = light_specular * material_specular;
-
-    glUniform4fv(glGetUniformLocation(obj_program, "AmbientProduct"), 1, ambient_product);
-    glUniform4fv(glGetUniformLocation(obj_program, "DiffuseProduct"), 1, diffuse_product);
-    glUniform4fv(glGetUniformLocation(obj_program, "SpecularProduct"), 1, specular_product);
-    
-    glUniform4fv(glGetUniformLocation(obj_program, "LightPosition"), 1, light_position);
-
-    glUniform1f(glGetUniformLocation(obj_program, "Shininess"), material_shininess);
-         
-    // Retrieve transformation uniform variable locations
-    ModelViewObj = glGetUniformLocation(obj_program, "ModelViewObj");
-    ProjectionObj = glGetUniformLocation(obj_program, "ProjectionObj");
-
-    // Rest of init
-    glEnable(GL_DEPTH_TEST);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glClearColor(0.0, 0.0, 0.0, 1.0);
+void myGlutKeyboard(unsigned char Key, int x, int y)
+{
+  switch(Key)
+  {
+  case 27: 
+  case 'q':
+    exit(0);
+    break;
+  case 'a':
+    eye_dir = RotateZ(2)*eye_dir;
+    break;
+  case 'd':
+    eye_dir = RotateZ(-2)*eye_dir;
+    break;
+  case 'w':
+    eye_pos = eye_pos + 0.1 * eye_dir;
+    break;
+  case 's':
+    eye_pos = eye_pos - 0.1 * eye_dir;
+  };
+  
+  glutPostRedisplay();
 }
 
-//----------------------------------------------------------------------------
 
-void mouse(int button, int state, int x, int y) {
-	//Redisplay on mouse click (CSIL terminals have issues displaying on init)
-    glutPostRedisplay();
+
+void myGlutMenu( int value )
+{
+  myGlutKeyboard( value, 0, 0 );
 }
 
-//----------------------------------------------------------------------------
 
-void reshape(int width, int height) {
-	//Build and bind viewport to program
-    glViewport(0, 0, width, height);
 
-    GLfloat  left = -100.0, right = 100.0;
-    GLfloat  bottom = -110.0, top = 90.0;
-    GLfloat  zNear = -100.0, zFar = 100.0;
+void myGlutIdle( void )
+{
+  
+  if ( glutGetWindow() != main_window ) 
+    glutSetWindow(main_window);  
 
-    GLfloat aspect = GLfloat(width)/height;
 
-    if ( aspect > 1.0 ) { left *= aspect; right *= aspect; }
-    else { bottom /= aspect; top /= aspect; }
-
-    //Build projection matrix based on viewport values
-    mat4 projection = Ortho(left, right, bottom, top, zNear, zFar);
-
-    glUseProgram(obj_program);
-    glUniformMatrix4fv(ProjectionObj, 1, GL_TRUE, projection);
-    model_view_obj = mat4(1.0);
+  glutPostRedisplay();
 }
 
-//----------------------------------------------------------------------------
 
-void keyboard(unsigned char key, int x, int y) {
-	// Quit function on ESC or Q
-    switch(key) {
-	case 033: // Escape Key
-	case 'q': case 'Q':
-	    exit( EXIT_SUCCESS );
-	    break;
-	// Redisplay function on R (CSIL terminals have issues displaying on init)
-	case 'r': case 'R':
-	    glutPostRedisplay();
-	    break;
-    }
-
+void myGlutMouse(int button, int button_state, int x, int y )
+{
 }
 
-//----------------------------------------------------------------------------
 
-void control_cb(int control) {
-	// Functions for GLUI controls
-    #define SAVEID 500
-    #define LOADID 501
-    if (control == SAVEID) cout << "Save function not implemented\n";
-    if (control == LOADID) cout << "Load function not implemented\n";
+
+void myGlutMotion(int x, int y )
+{
+  glutPostRedisplay(); 
 }
 
-//----------------------------------------------------------------------------
 
-int main(int argc, char *argv[]) {
+void myGlutReshape( int x, int y )
+{
+  int tx, ty, tw, th;
+  GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
+  glViewport( tx, ty, tw, th );
 
-    cout << "Start" << endl;
+  xy_aspect = (float)tw / (float)th;
 
-    //GLUT initializations
-    glutInit( &argc, argv );
-    glutInitDisplayMode( GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH );
-    glutInitWindowPosition( 50, 50 );
-    glutInitWindowSize( 800, 600 );
-    glutInitContextVersion( 3, 0 );
-    glutInitContextProfile( GLUT_CORE_PROFILE );
-    main_window = glutCreateWindow( "SMF Viewer" );
-
-    cout << "Glut initialized" << endl;
-
-    //Main init
-    glewInit();     
-    cout << "Glew initialized" << endl;   
-
-    init();
-
-    cout << "RTIN initialized" << endl;
-
-    //GLUT function binds
-    glutDisplayFunc(display);
-    glutReshapeFunc(reshape);
-    glutKeyboardFunc(keyboard);
-    glutMouseFunc(mouse);
-
-    //Set background colour to grey
-    glClearColor( 0.5f, 0.5f, 0.5f, 1.0f);
-
-    cout << "Misc Glut init" << endl;
-
-    //Create bottom panel using GLUI
-    // glui = GLUI_Master.create_glui_subwindow(main_window, GLUI_SUBWINDOW_BOTTOM);
-    // glui->set_main_gfx_window(main_window);
-
-    // //Add rotation ball
-    // GLUI_Rotation *view_rot = new GLUI_Rotation(glui, "Rotate", view_rotate);
-    // view_rot->set_spin(0.05);
-    // new GLUI_Column(glui, false);
-
-    // //Add zoom slider
-    // GLUI_Translation *trans_y = new GLUI_Translation(glui, "Zoom", GLUI_TRANSLATION_Z, &obj_scale);
-    // trans_y->set_speed(0.05);
-    // new GLUI_Column(glui, false);
-
-    // //Add translation x/y sliders
-    // GLUI_Translation *trans_xy = new GLUI_Translation(glui, "Translate X/Y", GLUI_TRANSLATION_XY, pos);
-    // trans_xy->set_speed(0.05);
-    // new GLUI_Column(glui, false);
-
-    // //Add translate z slider
-    // GLUI_Translation *trans_z = new GLUI_Translation(glui, "Translate Z", GLUI_TRANSLATION_Z, &pos[2]);
-    // trans_z->set_speed(0.05);
-    // new GLUI_Column(glui, false);
-
-    // //Add save file text field and button
-    // new GLUI_StaticText(glui, "");
-    // savetext = new GLUI_EditText(glui, "Save File:", GLUI_EDITTEXT_TEXT);
-    // savebtn = new GLUI_Button(glui, "Save", SAVEID, control_cb);
-    // new GLUI_Column(glui, false);
-
-    // //Add load file text field and button
-    // new GLUI_StaticText(glui, "");
-    // loadtext = new GLUI_EditText(glui, "Open File:", GLUI_EDITTEXT_TEXT);
-    // loadbtn = new GLUI_Button(glui, "Open", LOADID, control_cb);
-    // new GLUI_Column(glui, false);
-
-    // //Add list of rendering options
-    // new GLUI_StaticText(glui, "");
-    // GLUI_Listbox *list = new GLUI_Listbox(glui, "Mode:", &curr_string);
-    // for(int i = 0; i < 4; i++) list->add_item(i, string_list[i]);
-    // new GLUI_StaticText(glui, "");
-    
-    // //Quit button
-    // new GLUI_Button(glui, "Quit", 0,(GLUI_Update_CB)exit);
-
-    // cout << "Glui created" << endl;
-    //Main GLUT loop
-    glutMainLoop();
-
-    return 0;
+  glutPostRedisplay();
 }
+
+void myGlutDisplay( void )
+{
+  glClearColor( .9f, .9f, .9f, 1.0f );
+  glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+  glMatrixMode( GL_PROJECTION );
+  glLoadIdentity();
+  //mat4 cameraView = LookAt(eye_pos, eye_pos+(view_rotate*eye_dir), vec4(0.0,0.0,1.0,1.0));
+  //glMultMatrixf();
+  //glFrustum( -xy_aspect*.04, xy_aspect*.04, -.04, .04, 0.0, 15.0 );
+
+  glMatrixMode( GL_MODELVIEW );
+
+  glLoadIdentity();
+  glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
+
+  glLoadIdentity();
+  //glTranslatef( 0.0, 0.0, -2.6f ); 
+  glMultMatrixf( view_rotate );
+  
+  glScalef( scale, scale, scale );
+  
+  r.DrawWire();
+  r.DrawEye();
+  glutSwapBuffers(); 
+}
+
+
+int main(int argc, char* argv[])
+{
+  if (argc == 1) {
+    init(5);
+  } else {
+    init(atoi(argv[1]));
+  }
+  glutInit(&argc, argv);
+  glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
+  glutInitWindowPosition( 50, 50 );
+  glutInitWindowSize( 800, 600 );
+ 
+  main_window = glutCreateWindow( "ROAM - Realtime Optimally Adapting Meshes" );
+  glutDisplayFunc( myGlutDisplay );
+  GLUI_Master.set_glutReshapeFunc( myGlutReshape );  
+  GLUI_Master.set_glutKeyboardFunc( myGlutKeyboard );
+  GLUI_Master.set_glutSpecialFunc( NULL );
+  GLUI_Master.set_glutMouseFunc( myGlutMouse );
+  glutMotionFunc( myGlutMotion );
+
+  glEnable(GL_NORMALIZE);
+  glEnable(GL_LIGHTING);
+
+  glEnable(GL_LIGHT0);
+  glLightfv(GL_LIGHT0, GL_AMBIENT, light0_ambient);
+  glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
+  glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
+
+  glEnable(GL_DEPTH_TEST);
+
+  glewInit();
+
+
+  printf( "GLUI version: %3.2f\n", GLUI_Master.get_version() );
+
+  glui = GLUI_Master.create_glui_subwindow( main_window, 
+                                             GLUI_SUBWINDOW_BOTTOM );
+  glui->set_main_gfx_window( main_window );
+
+  GLUI_Rotation *view_rot = new GLUI_Rotation(glui, "Rotate", view_rotate );
+  view_rot->set_spin( 1.0 );
+  new GLUI_Column( glui, false );
+  GLUI_Translation *trans_xy = 
+    new GLUI_Translation(glui, "Translate", GLUI_TRANSLATION_XY, eye_pos );
+  trans_xy->set_speed( .005 );
+  new GLUI_Column( glui, false );
+  GLUI_Translation *trans_z = 
+    new GLUI_Translation( glui, "Zoom", GLUI_TRANSLATION_Z, &eye_pos[2] );
+  trans_z->set_speed( .005 );
+  
+  glutPostRedisplay();
+  
+  glutMainLoop();
+
+  return EXIT_SUCCESS;
+}
+

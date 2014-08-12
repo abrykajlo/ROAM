@@ -13,9 +13,12 @@ public:
 	RTIN();
 	RTIN(int);
 	~RTIN();
-	RTIN &operator=(RTIN);
 	void Draw();
-	void Init();
+	void DrawWire();
+	void DrawEye();
+	void WedgieTreePrint();
+	void BuildWedgies();
+	void SetEye(vec4*, vec4*);
 //temporary for unit testing private:
 	int Parent(int);
 	int Child(child, int);
@@ -23,16 +26,19 @@ public:
 	void ForceSplit(int);
 	void Split(int);
 	void Merge(int);
-	void Triangulate();
+	void Triangulate(const char *, int);
 	void DrawTriangle(int);
+	void DrawWireTriangle(int);
+	//void MakeErrors(int);
+	vec4 * eye_pos;
+	vec4 * eye_dir;
 	int * flags;
 	float * e_T;
 	unsigned int * splitQueue;
 	unsigned int * mergeQueue;
 	int size;
-	vec3 * normalBuffer;
+	vec3 * faceNormalBuffer;
+	vec3 * vertexNormalBuffer;
 	point4 * vertexBuffer;
 	GLuint * indexBuffer;
-	GLuint VBO;
-	GLuint IBO;
 };
