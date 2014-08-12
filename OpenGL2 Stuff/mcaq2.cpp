@@ -54,6 +54,7 @@ void init(int levels) {
   //r.WedgieTreePrint();
 }
 
+
 void myGlutKeyboard(unsigned char Key, int x, int y)
 {
   switch(Key)
@@ -62,17 +63,10 @@ void myGlutKeyboard(unsigned char Key, int x, int y)
   case 'q':
     exit(0);
     break;
-  case 'a':
-    eye_dir = RotateZ(2)*eye_dir;
-    break;
-  case 'd':
-    eye_dir = RotateZ(-2)*eye_dir;
-    break;
-  case 'w':
-    eye_pos = eye_pos + 0.1 * eye_dir;
-    break;
-  case 's':
-    eye_pos = eye_pos - 0.1 * eye_dir;
+  case GLUT_KEY_LEFT:
+    view_rotate = RotateZ(-5) * view_rotate;
+  case GLUT_KEY_RIGHT:
+    view_rotate = RotateZ(5) * view_rotate;
   };
   
   glutPostRedisplay();
@@ -128,6 +122,7 @@ void myGlutDisplay( void )
 
   glMatrixMode( GL_PROJECTION );
   glLoadIdentity();
+  eye_dir = view_rotate * vec4(1.0, 0.0, 0.0, 0.0);
   //mat4 cameraView = LookAt(eye_pos, eye_pos+(view_rotate*eye_dir), vec4(0.0,0.0,1.0,1.0));
   //glMultMatrixf();
   //glFrustum( -xy_aspect*.04, xy_aspect*.04, -.04, .04, 0.0, 15.0 );

@@ -10,7 +10,8 @@ RTIN::RTIN() {
 	size = 0;
 	e_T = 0;
 	flags = 0;
-	normalBuffer = 0;
+	vertexNormalBuffer = 0;
+	faceNormalBuffer = 0;
 	vertexBuffer = 0;
 	indexBuffer = 0;
 }
@@ -29,6 +30,10 @@ RTIN::~RTIN() {
 void RTIN::Draw() {
 	DrawTriangle(0);
 	//cout << "After root recursed" << endl;
+}
+
+void RTIN::DrawWire() {
+	DrawWireTriangle(0);
 }
 
 int RTIN::Parent(int triangle) {
@@ -143,7 +148,8 @@ void RTIN::Triangulate(const char * filename, int levels) {
 	size = (2 << levels) - 1;
 	flags = new int[size];
 	e_T = new float[size];
-	normalBuffer = new vec3[size - 1];
+	faceNormalBuffer = new vec3[size - 1];
+	vertexNormalBuffer = new vec3[4+(size-3)];
 	vertexBuffer = new vec4[4+(size-3)];
 	indexBuffer = new GLuint[3 * (size - 1)];
 	HeightMap z(filename, 0.5);
@@ -202,7 +208,15 @@ void RTIN::Triangulate(const char * filename, int levels) {
 		vec4 a = vertexBuffer[indexBuffer[3 * i]];
 		vec4 b = vertexBuffer[indexBuffer[3 * i + 1]];
 		vec4 c = vertexBuffer[indexBuffer[3 * i + 2]];
-		normalBuffer[i] = normalize( cross( (b - a), (c - a) ) );
+		faceNormalBuffer[i] = normalize( cross( (b - a), (c - a) ) );
+	}
+
+	for (int t = 1; t < size; t++) {
+		if (Child(LEFT, t) != -1) continue;
+		int index = 3 * (t - 1);
+		vertexNormalBuffer[indexBuffer[index]] += faceNormalBuffer[t - 1];
+		vertexNormalBuffer[indexBuffer[index + 1]] += faceNormalBuffer[t - 1];
+		vertexNormalBuffer[indexBuffer[index + 2]] += faceNormalBuffer[t - 1];
 	}
 }
 
@@ -217,17 +231,17 @@ void RTIN::DrawTriangle(int triangle) {
 		glBegin(GL_TRIANGLES);
 			index = indexBuffer[i];
 			vect = vertexBuffer[index]; i++;
-			norm = normalBuffer[triangle - 1];
+			norm = faceNormalBuffer[triangle - 1];
 			glNormal3f(norm.x, norm.y, norm.z);
 			glVertex4f(vect.x, vect.y, vect.z, 1.0);
 			index = indexBuffer[i];
 			vect = vertexBuffer[index]; i++;
-			norm = normalBuffer[triangle - 1];
+			norm = faceNormalBuffer[triangle - 1];
 			glNormal3f(norm.x, norm.y, norm.z);
 			glVertex4f(vect.x, vect.y, vect.z, 1.0);
 			index = indexBuffer[i];
 			vect = vertexBuffer[index];
-			norm = normalBuffer[triangle - 1];
+			norm = faceNormalBuffer[triangle - 1];
 			glNormal3f(norm.x, norm.y, norm.z);
 			glVertex4f(vect.x, vect.y, vect.z, 1.0);
 		glEnd();
@@ -240,4 +254,84 @@ void RTIN::DrawTriangle(int triangle) {
 			DrawTriangle(right);
 		}
 	}
+}
+
+void RTIN::DrawWireTriangle(int triangle) {
+	if (flags[triangle] == 1) {
+		int i = 3 * (triangle - 1);
+		int index;
+		vec4 vect;
+		glMatrixMode(GL_PROJECTION );
+		glLoadIdentity();
+		glBegin(GL_LINE_LOOP);
+			index = indexBuffer[i];
+			vect = vertexBuffer[index]; i++;
+			glVertex4f(vect.x, vect.y, vect.z, 1.0);
+			index = indexBuffer[i];
+			vect = vertexBuffer[index]; i++;
+			glVertex4f(vect.x, vect.y, vect.z, 1.0);
+			index = indexBuffer[i];
+			vect = vertexBuffer[index];
+			glVertex4f(vect.x, vect.y, vect.z, 1.0);
+		glEnd();
+	} else {
+		int left = Child(LEFT, triangle);
+		int right = Child(RIGHT, triangle);
+		if (left >= 0 && right >= 0) {
+			//cout << "Consider children: " << left << " & " << right << endl;
+			DrawWireTriangle(left);
+			DrawWireTriangle(right);
+		}
+	}
+}
+
+void RTIN::BuildWedgies() {
+	for (int t = size-1; 0 < t; t--)
+	{
+		if (Child(LEFT, t) == -1) {
+			e_T[t] = 0.0;
+		} else {
+			int left = Child(LEFT, t);
+			int right = Child(RIGHT, t);
+			float vc = vertexBuffer[indexBuffer[3*(left - 1) + 2]].z; //z(vc)
+			float vc_t = (vertexBuffer[indexBuffer[3*(t - 1)]].z+vertexBuffer[indexBuffer[3*(t - 1)+1]].z)/2; //z_T(vc)
+			e_T[t] = max(e_T[left], e_T[right]) + abs(vc - vc_t); //i+1 for empty root
+		}
+		
+	}
+}
+
+void RTIN::DrawEye() {
+	glPointSize(5.0f);
+	glBegin(GL_POINTS);
+		glVertex4f(eye_pos->x, eye_pos->y, eye_pos->z, 1.0);
+	glEnd();
+	glBegin(GL_LINES);
+		glVertex4f(eye_pos->x, eye_pos->y, eye_pos->z, 1.0);
+		glVertex4f(eye_pos->x + eye_dir->x, eye_pos->y + eye_dir->y, eye_pos->z + eye_dir->z, 1.0);
+	glEnd();
+}
+
+void RTIN::SetEye(vec4 *ep, vec4 *ed) {
+	eye_pos = ep;
+	eye_dir = ed;
+}
+
+void RTIN::WedgieTreePrint() {
+	cout << "----------" << endl;
+	int MaxLevel = 5;
+	for (int i = 0; i <= MaxLevel; ++i)
+	{
+		for (int j = 0; j < pow(2,MaxLevel-i); ++j)
+		{
+			cout << " ";
+		}
+		for (int j = pow(2,i)-1; j < pow(2,i+1)-1; ++j)
+		{
+			cout << e_T[j];
+			for (int k = 0; k < pow(2,MaxLevel-i+2)-pow(2,MaxLevel-i+1)-1; ++k)	cout << " ";
+		}
+		cout << endl << endl;
+	}
+	cout << "----------" << endl;
 }
