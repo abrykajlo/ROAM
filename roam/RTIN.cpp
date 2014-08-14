@@ -1,10 +1,25 @@
 #include <iostream>
+#include <algorithm>
 #include <vector>
 #include <cmath>
 #include "RTIN.h"
 #include "HeightMap.h"
 
 using namespace std;
+
+//isnt exactly safe but is the fastest hack
+bool MaxPriority(priority p1, priority p2) {
+	return *p1.p < *p2.p;
+}
+
+bool MinPriority(priority p1, priority p2) {
+	return *p2.p < *p1.p;
+}
+
+priority::priority(int _t, float * _p) {
+	triangle = _t;
+	p = _p;
+}
 
 RTIN::RTIN() {
 	size = 0;
@@ -14,6 +29,13 @@ RTIN::RTIN() {
 	faceNormalBuffer = 0;
 	vertexBuffer = 0;
 	indexBuffer = 0;
+	priorities = 0;
+	frame = 0;
+}
+
+RTIN::RTIN(vec4* ep, vec4* ed) {
+	eye_dir = ed;
+	eye_pos = ep;
 }
 
 RTIN::~RTIN() {
@@ -32,7 +54,55 @@ void RTIN::Draw() {
 	//cout << "After root recursed" << endl;
 }
 
+void RTIN::Update() {
+	if (frame == 0) {
+		flags[1] = 1;
+		flags[2] = 1;
+		
+		priorities = new float[size - 1];
+		SetPriority(1);
+		SetPriority(2);
+		triangles = 2;
+		
+		splitQueue.push_back(priority(1, priorities));
+		splitQueue.push_back(priority(2, priorities+1));
+		make_heap(splitQueue.begin(), splitQueue.end(), MaxPriority);
+	} else {
+		for (int i = 0; i < splitQueue.size(); i++) {
+			SetPriority(splitQueue[i].triangle);
+		}
+		make_heap(splitQueue.begin(), splitQueue.end(), MaxPriority);
+		for (int i = 0; i < mergeQueue.size(); i++) {
+			SetPriority(mergeQueue[i].triangle);
+		}
+		make_heap(splitQueue.begin(), splitQueue.end(), MinPriority);
+	}
+	float max = 0, min = 0;
+	if (!splitQueue.empty()) max = *splitQueue[0].p;
+	if (!mergeQueue.empty()) min = *mergeQueue[0].p;
+	
+	while (max > min || triangles > 500) {
+		if (triangles > 500) {
+			Merge(mergeQueue[0].triangle);
+			pop_heap(mergeQueue.begin(), mergeQueue.end(), MinPriority);
+			mergeQueue.pop_back();
+			min = *mergeQueue[0].p;
+			cout << "Merge" << endl;
+			if (mergeQueue.empty()) break;
+		} else {
+			ForceSplit(splitQueue[0].triangle);
+			pop_heap(splitQueue.begin(), splitQueue.end(), MaxPriority);
+			splitQueue.pop_back();
+			max = *splitQueue[0].p;
+			cout << "Split" << endl;
+			if (splitQueue.empty()) break;
+		}
+	}
+	frame++;
+}
+
 void RTIN::DrawWire() {
+	glColor4f(0.0, 0.0, 0.0, 1.0);
 	DrawWireTriangle(0);
 }
 
@@ -123,11 +193,15 @@ void RTIN::ForceSplit(int triangle) {
 }
 
 void RTIN::Split(int triangle) {
-	flags[triangle] = 0;
-	int left = Child(LEFT, triangle);
-	int right = Child(RIGHT, triangle);
-	flags[left] = 1;
-	flags[right] = 1;
+	if (Child(LEFT, triangle) != -1 && flags[triangle] == 1) {
+		flags[triangle] = 0;
+		int left = Child(LEFT, triangle);
+		int right = Child(RIGHT, triangle);
+		flags[left] = 1;
+		flags[right] = 1;
+
+		triangles++;
+	}
 }
 
 void RTIN::Merge(int triangle) {
@@ -142,9 +216,10 @@ void RTIN::Merge(int triangle) {
 	right = Child(RIGHT, T_B);
 	flags[left] = 0;
 	flags[right] = 0;
+	triangles -= 2;
 }
 
-void RTIN::Triangulate(const char * filename, int levels) {
+void RTIN::Triangulate(const char * filename, int levels, vec4 *ep, vec4 *ed) {
 	size = (2 << levels) - 1;
 	flags = new int[size];
 	e_T = new float[size];
@@ -218,6 +293,15 @@ void RTIN::Triangulate(const char * filename, int levels) {
 		vertexNormalBuffer[indexBuffer[index + 1]] += faceNormalBuffer[t - 1];
 		vertexNormalBuffer[indexBuffer[index + 2]] += faceNormalBuffer[t - 1];
 	}
+	priorities = new float[size - 1];
+	BuildWedgies();
+	eye_pos = ep;
+	eye_dir = ed;
+
+	// for (int i = 0; i < size; i++) {
+	// 	if (Child(LEFT, i) != -1) continue;
+	// 	flags[i] = 1;
+	// }
 }
 
 void RTIN::DrawTriangle(int triangle) {
@@ -229,6 +313,7 @@ void RTIN::DrawTriangle(int triangle) {
 		vec4 vect;
 		vec3 norm;
 		glBegin(GL_TRIANGLES);
+			glColor4f(0.5,0.5,0.5,1.0);
 			index = indexBuffer[i];
 			vect = vertexBuffer[index]; i++;
 			norm = faceNormalBuffer[triangle - 1];
@@ -261,8 +346,6 @@ void RTIN::DrawWireTriangle(int triangle) {
 		int i = 3 * (triangle - 1);
 		int index;
 		vec4 vect;
-		glMatrixMode(GL_PROJECTION );
-		glLoadIdentity();
 		glBegin(GL_LINE_LOOP);
 			index = indexBuffer[i];
 			vect = vertexBuffer[index]; i++;
@@ -317,21 +400,29 @@ void RTIN::SetEye(vec4 *ep, vec4 *ed) {
 	eye_dir = ed;
 }
 
-void RTIN::WedgieTreePrint() {
-	cout << "----------" << endl;
-	int MaxLevel = 5;
-	for (int i = 0; i <= MaxLevel; ++i)
-	{
-		for (int j = 0; j < pow(2,MaxLevel-i); ++j)
-		{
-			cout << " ";
+void RTIN::SetPriority(int triangle) {
+	mat4 cameraSpace = LookAt(*eye_pos, *eye_pos+*eye_dir, vec4(0.0, 0.0, 1.0, 1.0));
+	vec4 abc = cameraSpace * vec4(0.0, 0.0, e_T[triangle - 1], 1.0);
+
+	int i = 3 * (triangle - 1);
+
+	vec4 pqr;
+	
+	float max, min, maxTemp, minTemp;
+
+	for (int n = 0; n < 3; n++) {
+		pqr = vertexBuffer[indexBuffer[i + n]];
+		maxTemp = pow(abc.x * pqr.z - abc.z * pqr.x, 2.0) + pow(abc.y * pqr.z - abc.z * pqr.y, 2.0);
+		minTemp = pow(pqr.z, 2.0) - pow(abc.z, 2.0);
+		if (n == 0) {
+			max = maxTemp;
+			min = minTemp;
+		} else {
+			if (max < maxTemp) max = maxTemp;
+			if (minTemp < min) min = minTemp;
 		}
-		for (int j = pow(2,i)-1; j < pow(2,i+1)-1; ++j)
-		{
-			cout << e_T[j];
-			for (int k = 0; k < pow(2,MaxLevel-i+2)-pow(2,MaxLevel-i+1)-1; ++k)	cout << " ";
-		}
-		cout << endl << endl;
 	}
-	cout << "----------" << endl;
+
+	priorities[triangle - 1] = 2 / min * sqrt(max);
+	cout << "Priority " << triangle << " = " << priorities[triangle - 1] << endl;
 }

@@ -39,15 +39,10 @@ void setOrthographicProjection() {
 }
 
 void setCameraView() {
-  glMatrixMode(GL_MODELVIEW);
+  glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluLookAt(eye_pos.x, eye_pos.y, eye_pos.z,
-            eye_pos.x+eye_dir.x, eye_pos.y+eye_dir.y, eye_pos.z + eye_dir.z,
-            0.0,       0.0,       1.0);
-}
-
-void setFrustumProjection() {
-  glFrustum(-0.5, 0.5, -0.5, 0.5, 0.0, 0.5);
+  mat4 cameraView = LookAt(eye_pos, eye_pos+eye_dir, vec4(0.0, 0.0, 1.0, 1.0));
+  glMultMatrixf(cameraView);
 }
 
 void PrintFrameRate() {
@@ -74,7 +69,6 @@ void myGlutKeyboard(unsigned char Key, int x, int y)
     break;
   case 'd':
     eye_dir = RotateZ(-2)*eye_dir;
-    cout << "right" << endl;
     break;
   case 'w':
     eye_pos = eye_pos + 0.1 * eye_dir;
@@ -133,7 +127,7 @@ void myGlutMotion(int x, int y )
 void myGlutReshape( int x, int y )
 {
   int tx, ty, tw, th;
-  //GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
+  GLUI_Master.get_viewport_area( &tx, &ty, &tw, &th );
   glViewport( tx, ty, tw, th );
 
   xy_aspect = (float)tw / (float)th;
@@ -143,8 +137,6 @@ void myGlutReshape( int x, int y )
 
 void myGlutDisplay( void )
 {
-  cout << "drawing..." << endl;
-  r.Update();
   PrintFrameRate();
   glutSetWindow(sidebar_win);
   glClearColor( .9f, .9f, .9f, 1.0f );
@@ -156,9 +148,11 @@ void myGlutDisplay( void )
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
   setOrthographicProjection();
-  
+  // glMultMatrixf(cameraView);
+  // glFrustum( -xy_aspect*.04, xy_aspect*.04, -.04, .04, 0.0, 15.0 );
   glMatrixMode( GL_MODELVIEW );
   glLoadIdentity();
+  //r.Update();
   r.DrawWire();
   r.DrawEye();
   glutSwapBuffers();
@@ -170,7 +164,6 @@ void myGlutDisplay( void )
 
   glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
   setCameraView();
-  //glFrustum();
   r.Draw();
 
   glScalef( scale, scale, scale );
@@ -196,13 +189,11 @@ int main(int argc, char* argv[])
   wireframe_win = glutCreateSubWindow(main_window, 600, 0, 200, 200);
   sidebar_win = glutCreateSubWindow(main_window, 600, 200, 200, 400);
   glutDisplayFunc( myGlutDisplay );
-  glutReshapeFunc( myGlutReshape );  
-  glutKeyboardFunc( myGlutKeyboard );
-  glutSpecialFunc( NULL );
-  glutMouseFunc( myGlutMouse );
+  GLUI_Master.set_glutReshapeFunc( myGlutReshape );  
+  GLUI_Master.set_glutKeyboardFunc( myGlutKeyboard );
+  GLUI_Master.set_glutSpecialFunc( NULL );
+  GLUI_Master.set_glutMouseFunc( myGlutMouse );
   glutMotionFunc( myGlutMotion );
-
-  glutSetWindow(terrain_win);
 
   glEnable(GL_NORMALIZE);
   glEnable(GL_LIGHTING);

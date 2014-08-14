@@ -1,5 +1,14 @@
+#include <vector>
 #include <inttypes.h>
 #include "include/Angel.h"
+
+using namespace std;
+
+typedef struct priority {
+	int triangle;
+	float * p;
+	priority(int, float*);
+} priority;
 
 typedef Angel::vec4 point4;
 
@@ -11,32 +20,46 @@ enum neighbor {L, R, B};
 class RTIN {
 public:
 	RTIN();
-	RTIN(int);
+	RTIN(vec4*, vec4*);
 	~RTIN();
 	void Draw();
 	void DrawWire();
 	void DrawEye();
-	void WedgieTreePrint();
-	void BuildWedgies();
 	void SetEye(vec4*, vec4*);
-//temporary for unit testing private:
+	//for Triangulating the mesh
+	void Triangulate(const char *, int, vec4*, vec4*);
+	void Update();
+private:
 	int Parent(int);
 	int Child(child, int);
 	int Neighbor(neighbor, int);
+	
 	void ForceSplit(int);
 	void Split(int);
 	void Merge(int);
-	void Triangulate(const char *, int);
+	
+	void SetPriority(int);
+	float * priorities;
+	vector<priority> splitQueue; //stores triangles to split
+	vector<priority> mergeQueue; //stores mergable diamonds
+
+	//Heap operations
+	void Heapify(int, int*, int);
+	//private draw functions
 	void DrawTriangle(int);
 	void DrawWireTriangle(int);
-	//void MakeErrors(int);
+	
+	void BuildWedgies();
+
+	unsigned int frame; //what frame are we on should increment every draw
+
 	vec4 * eye_pos;
 	vec4 * eye_dir;
+
 	int * flags;
 	float * e_T;
-	unsigned int * splitQueue;
-	unsigned int * mergeQueue;
 	int size;
+	int triangles;
 	vec3 * faceNormalBuffer;
 	vec3 * vertexNormalBuffer;
 	point4 * vertexBuffer;
