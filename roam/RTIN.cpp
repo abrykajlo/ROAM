@@ -56,15 +56,13 @@ void RTIN::Draw() {
 
 void RTIN::Update() {
 	if (frame == 0) {
-		for (int i = 0; i < size; i++) {
-			if (Child(LEFT, i) == -1) flags[i] = 1;
-		}
-		int j =9;
+		
 		priorities = new float[size - 1];
 		SetPriority(1);
 		SetPriority(2);
 		triangles = 2;
-		
+		flags[1] = 1;
+		flags[2] = 1;
 		splitQueue.push_back(priority(1, priorities));
 		splitQueue.push_back(priority(2, priorities+1));
 		make_heap(splitQueue.begin(), splitQueue.end(), MaxPriority);
@@ -89,18 +87,32 @@ void RTIN::Update() {
 			mergeQueue.pop_back();
 			min = *mergeQueue[0].p;
 			cout << "Merge" << endl;
-			if (mergeQueue.empty()) break;
+			if (mergeQueue.empty()) 
+				break;
+			else if (!mergeQueue.empty())
+				min = *mergeQueue[0].p;
 		} else {
 			ForceSplit(splitQueue[0].triangle);
-			pop_heap(splitQueue.begin(), splitQueue.end(), MaxPriority);
+			int triangle = splitQueue[0].triangle;
+			int baseNeighbor = Neighbor(B, triangle);
+			if (baseNeighbor != -1) {
+				float * p = (priorities[baseNeighbor - 1] < priorities[triangle - 1]) ? 
+							&priorities[triangle - 1] : &priorities[baseNeighbor - 1]; 
+				mergeQueue.push_back(priority(triangle, p));
+			}
+			make_heap(splitQueue.begin(), splitQueue.end(), MaxPriority);
 			splitQueue.pop_back();
 			max = *splitQueue[0].p;
 			cout << "Split" << endl;
-			if (splitQueue.empty()) break;
+			if (splitQueue.empty()) 
+				break;
+			else if (!splitQueue.empty())
+			 	max = *splitQueue[0].p;
 		}
 	}
 	frame++;
 }
+
 
 void RTIN::DrawWire() {
 	glColor4f(0.0, 0.0, 0.0, 1.0);
@@ -200,7 +212,14 @@ void RTIN::Split(int triangle) {
 		int right = Child(RIGHT, triangle);
 		flags[left] = 1;
 		flags[right] = 1;
-
+		for (int i = 0; i < splitQueue.size(); i++) {
+			if (splitQueue[i].triangle == triangle) {
+				splitQueue.erase(splitQueue.begin() + i);
+				break;
+			}
+		}
+		splitQueue.push_back(priority(left, &priorities[left - 1]));
+		splitQueue.push_back(priority(right, &priorities[right - 1]));
 		triangles++;
 	}
 }
@@ -217,7 +236,35 @@ void RTIN::Merge(int triangle) {
 	right = Child(RIGHT, T_B);
 	flags[left] = 0;
 	flags[right] = 0;
+	for (int i = 0; i < mergeQueue.size(); i++) {
+		if (mergeQueue[i].triangle == triangle) {
+			mergeQueue.erase(mergeQueue.begin() + i);
+			break;
+		}
+	}
+	int parent = Parent(triangle);
+	int baseNeighbor = Neighbor(B, parent);
+	if (flags[Child(LEFT, parent)] && flags[Child(RIGHT, parent)] &&
+		flags[Child(LEFT, baseNeighbor)] && flags[Child(RIGHT, baseNeighbor)]) {
+		SetPriority(parent);
+		SetPriority(baseNeighbor);
+		float * p = (priorities[baseNeighbor - 1] < priorities[parent - 1]) ? 
+					&priorities[parent - 1] : &priorities[baseNeighbor - 1]; 
+		mergeQueue.push_back(priority(triangle, p));
+	}
+	triangle = Neighbor(B, triangle);
+	parent = Parent(triangle);
+	baseNeighbor = Neighbor(B, parent);
+	if (flags[Child(LEFT, parent)] && flags[Child(RIGHT, parent)] &&
+		flags[Child(LEFT, baseNeighbor)] && flags[Child(RIGHT, baseNeighbor)]) {
+		SetPriority(parent);
+		SetPriority(baseNeighbor);
+		float * p = (priorities[baseNeighbor - 1] < priorities[parent - 1]) ? 
+					&priorities[parent - 1] : &priorities[baseNeighbor - 1]; 
+		mergeQueue.push_back(priority(triangle, p));
+	}
 	triangles -= 2;
+
 }
 
 void RTIN::Triangulate(const char * filename, int levels, vec4 *ep, vec4 *ed) {

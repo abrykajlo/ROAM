@@ -43,13 +43,14 @@ private:
 	vector<priority> splitQueue; //stores triangles to split
 	vector<priority> mergeQueue; //stores mergable diamonds
 
-	//Heap operations
-	void Heapify(int, int*, int);
 	//private draw functions
 	void DrawTriangle(int);
 	void DrawWireTriangle(int);
 	
 	void BuildWedgies();
+
+	void MergeQueueRemove(int);
+	void SplitQueueRemove(int);
 
 	unsigned int frame; //what frame are we on should increment every draw
 
