@@ -3,7 +3,6 @@
 #include <string>
 #include <iostream>
 #include <stdlib.h>
-#include <GL/glui.h>
 
 using namespace std;
 
@@ -11,7 +10,7 @@ int frame = 0, currentTime, baseTime = 0;
 
 float xy_aspect;
 int   last_x, last_y;
-float rotationX = 0.0, rotationY = 0.0;
+float rotationX = 0.0, rotationY = 0.0, rotationZ = 0.0;
 
 int   main_window;
 int   wireframe_win;
@@ -39,15 +38,14 @@ void setOrthographicProjection() {
 }
 
 void setCameraView() {
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective(50.0, 1.0, 0.1, 1.0);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   gluLookAt(eye_pos.x, eye_pos.y, eye_pos.z,
             eye_pos.x+eye_dir.x, eye_pos.y+eye_dir.y, eye_pos.z + eye_dir.z,
             0.0,       0.0,       1.0);
-}
-
-void setFrustumProjection() {
-  glFrustum(-0.5, 0.5, -0.5, 0.5, 0.0, 0.5);
 }
 
 void PrintFrameRate() {
@@ -71,9 +69,11 @@ void myGlutKeyboard(unsigned char Key, int x, int y)
     break;
   case 'a':
     eye_dir = RotateZ(2)*eye_dir;
+    rotationZ += 2;
     break;
   case 'd':
     eye_dir = RotateZ(-2)*eye_dir;
+    rotationZ -= 2;
     cout << "right" << endl;
     break;
   case 'w':
@@ -83,10 +83,10 @@ void myGlutKeyboard(unsigned char Key, int x, int y)
     eye_pos = eye_pos - 0.1 * eye_dir;
     break;
   case '=':
-    eye_pos = Translate(0.0, 0.0, 0.01) * eye_pos;
+    eye_dir = RotateZ(rotationZ) * RotateY(2) * RotateZ(-rotationZ) * eye_dir;
     break;
   case '-':
-    eye_pos = Translate(0.0, 0.0, -0.01) * eye_pos;
+    eye_dir = RotateZ(rotationZ) * RotateY(-2) * RotateZ(-rotationZ) * eye_dir;
     break;
   case '/':
     glutFullScreen();
@@ -215,9 +215,6 @@ int main(int argc, char* argv[])
   glEnable(GL_DEPTH_TEST);
 
   glewInit();
-
-
-  printf( "GLUI version: %3.2f\n", GLUI_Master.get_version() );
   
   glutPostRedisplay();
   

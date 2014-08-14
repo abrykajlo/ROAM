@@ -34,7 +34,7 @@ EXECUTABLE=roam
 # to your program here 
 
 # Linux (default)
-LDFLAGS = -lGL -lglut -lGLEW -lXext -lX11 -lm -L./lib -lglui -lGLU
+LDFLAGS = -lGL -lglut -lGLEW -lXext -lX11 -lm -lGLU
 
 # If you have other library files in a different directory add them here 
 INCLUDEFLAG= -I. -I$(INCLUDEDIR) -Iinclude/ -I./include

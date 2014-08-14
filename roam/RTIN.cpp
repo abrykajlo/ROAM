@@ -56,9 +56,10 @@ void RTIN::Draw() {
 
 void RTIN::Update() {
 	if (frame == 0) {
-		flags[1] = 1;
-		flags[2] = 1;
-		
+		for (int i = 0; i < size; i++) {
+			if (Child(LEFT, i) == -1) flags[i] = 1;
+		}
+		int j =9;
 		priorities = new float[size - 1];
 		SetPriority(1);
 		SetPriority(2);
