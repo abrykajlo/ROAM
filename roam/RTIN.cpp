@@ -92,7 +92,7 @@ void RTIN::Update() {
 	//cout << max << " " << min << endl;
 	//cout << "Triangle count " << triangles << endl;
 	int counter = 0;
-	while (triangles != target) {
+	while (max > min || triangles != target) {
 		//cout << max << " " << min << endl;
 		cout << triangles << endl;
 		if (triangles > target) {
@@ -115,6 +115,8 @@ void RTIN::Update() {
 				float * p = (priorities[baseNeighbor - 1] < priorities[triangle - 1]) ? 
 							&priorities[triangle - 1] : &priorities[baseNeighbor - 1]; 
 				mergeQueue.push_back(priority(triangle, p));
+				make_heap(mergeQueue.begin(), mergeQueue.end(), MinPriority);
+				min = *mergeQueue[0].p;
 			}
 			make_heap(splitQueue.begin(), splitQueue.end(), MaxPriority);
 			max = *splitQueue[0].p;
@@ -125,7 +127,7 @@ void RTIN::Update() {
 			 	max = *splitQueue[0].p;
 		}
 		//cout << "before break" << endl;
-		cout << counter;
+		//cout << counter;
 		if (counter == 1000) break;
 		counter++;
 	}
