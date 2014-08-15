@@ -10,8 +10,6 @@ typedef struct priority {
 	priority(int, float*);
 } priority;
 
-typedef Angel::vec4 point4;
-
 enum child {LEFT = 1, RIGHT = 2};
 
 enum neighbor {L, R, B};
@@ -61,8 +59,9 @@ private:
 	float * e_T;
 	int size;
 	int triangles;
+	int target;
 	vec3 * faceNormalBuffer;
 	vec3 * vertexNormalBuffer;
-	point4 * vertexBuffer;
+	vec4 * vertexBuffer;
 	GLuint * indexBuffer;
 };

@@ -16,10 +16,13 @@ int   main_window;
 int   wireframe_win;
 int   terrain_win;
 int   sidebar_win;
+
+int toggle = 1;
+
 float scale = 1.0;
 mat4 view_rotate = mat4(1.0);
 
-vec4 eye_pos = vec4(0.0, 0.0, 0.0, 1.0);
+vec4 eye_pos = vec4(0.0, 0.0, 0.5, 1.0);
 vec4 eye_dir = vec4(0.1, 0.0, 0.0, 0.0);
 RTIN r;
 
@@ -74,7 +77,6 @@ void myGlutKeyboard(unsigned char Key, int x, int y)
   case 'd':
     eye_dir = RotateZ(-2)*eye_dir;
     rotationZ -= 2;
-    cout << "right" << endl;
     break;
   case 'w':
     eye_pos = eye_pos + 0.1 * eye_dir;
@@ -93,6 +95,8 @@ void myGlutKeyboard(unsigned char Key, int x, int y)
     break;
   case 'r':
     glutPostRedisplay();
+  case 't':
+    toggle ^= 1;
   };
   
   glutPostRedisplay();
@@ -143,15 +147,18 @@ void myGlutReshape( int x, int y )
 
 void myGlutDisplay( void )
 {
-  cout << "drawing..." << endl;
-  r.Update();
-  PrintFrameRate();
+  //r.Update();
+  //PrintFrameRate();
   glutSetWindow(sidebar_win);
   glClearColor( .9f, .9f, .9f, 1.0f );
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
   glutSwapBuffers();
   
-  glutSetWindow(wireframe_win);
+  if (toggle)
+    glutSetWindow(wireframe_win);
+  else
+    glutSetWindow(terrain_win);
+
   glClearColor( .9f, .9f, .9f, 1.0f );
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
@@ -162,8 +169,12 @@ void myGlutDisplay( void )
   r.DrawWire();
   r.DrawEye();
   glutSwapBuffers();
+  
+  if (toggle)
+    glutSetWindow(terrain_win);
+  else
+    glutSetWindow(wireframe_win);
 
-  glutSetWindow(terrain_win);
   glClearColor( .9f, .9f, .9f, 1.0f );
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
@@ -196,11 +207,11 @@ int main(int argc, char* argv[])
   wireframe_win = glutCreateSubWindow(main_window, 600, 0, 200, 200);
   sidebar_win = glutCreateSubWindow(main_window, 600, 200, 200, 400);
   glutDisplayFunc( myGlutDisplay );
-  glutReshapeFunc( myGlutReshape );  
+  glutReshapeFunc( NULL );  
   glutKeyboardFunc( myGlutKeyboard );
   glutSpecialFunc( NULL );
-  glutMouseFunc( myGlutMouse );
-  glutMotionFunc( myGlutMotion );
+  glutMouseFunc( NULL );
+  glutMotionFunc( NULL );
 
   glutSetWindow(terrain_win);
 

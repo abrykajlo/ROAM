@@ -27,6 +27,11 @@ int HeightMap::GetWidth() {
 	return w;
 }
 
+void HeightMap::LoadBMP(const char * filename) {
+	
+	img.Load(filename);
+}
+
 float HeightMap::operator()(float x, float y) {
 //x and z coordinates taken in as value between -1.0 and 1.0
 	//get in range 0.0 to 2.0
@@ -64,6 +69,5 @@ float HeightMap::operator()(float x, float y) {
 	h1 = h10 + (h11 - h10) * (fj - floor(fj));
 
 	h = h0 + (h1 - h0) * (fi - floor(fi));
-
 	return h;
 }

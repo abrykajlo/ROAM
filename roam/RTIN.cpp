@@ -5,7 +5,11 @@
 #include "RTIN.h"
 #include "HeightMap.h"
 
+#define TRIANGLE_COUNT 1000
+
 using namespace std;
+
+
 
 //isnt exactly safe but is the fastest hack
 bool MaxPriority(priority p1, priority p2) {
@@ -19,6 +23,7 @@ bool MinPriority(priority p1, priority p2) {
 priority::priority(int _t, float * _p) {
 	triangle = _t;
 	p = _p;
+	//cout << "Triangle " << triangle << " with priority " << *p << endl;
 }
 
 RTIN::RTIN() {
@@ -56,7 +61,6 @@ void RTIN::Draw() {
 
 void RTIN::Update() {
 	if (frame == 0) {
-		
 		priorities = new float[size - 1];
 		SetPriority(1);
 		SetPriority(2);
@@ -72,47 +76,148 @@ void RTIN::Update() {
 		}
 		make_heap(splitQueue.begin(), splitQueue.end(), MaxPriority);
 		for (int i = 0; i < mergeQueue.size(); i++) {
-			SetPriority(mergeQueue[i].triangle);
+			int triangle = mergeQueue[i].triangle;
+			int T_B = Neighbor(B, triangle);
+			SetPriority(triangle);
+			SetPriority(T_B);
+			if (priorities[T_B - 1] > priorities[triangle - 1]) {
+				mergeQueue[i] = priority(T_B, &priorities[T_B - 1]);
+			}
 		}
 		make_heap(splitQueue.begin(), splitQueue.end(), MinPriority);
 	}
 	float max = 0, min = 0;
 	if (!splitQueue.empty()) max = *splitQueue[0].p;
 	if (!mergeQueue.empty()) min = *mergeQueue[0].p;
-	
-	while (max > min || triangles > 500) {
-		if (triangles > 500) {
+	//cout << max << " " << min << endl;
+	//cout << "Triangle count " << triangles << endl;
+	int counter = 0;
+	while (triangles != target) {
+		//cout << max << " " << min << endl;
+		cout << triangles << endl;
+		if (triangles > target) {
+			
 			Merge(mergeQueue[0].triangle);
 			pop_heap(mergeQueue.begin(), mergeQueue.end(), MinPriority);
 			mergeQueue.pop_back();
-			min = *mergeQueue[0].p;
-			cout << "Merge" << endl;
+			// cout << "Merge" << endl;
 			if (mergeQueue.empty()) 
 				break;
-			else if (!mergeQueue.empty())
+			else 
 				min = *mergeQueue[0].p;
 		} else {
-			ForceSplit(splitQueue[0].triangle);
 			int triangle = splitQueue[0].triangle;
+			ForceSplit(triangle);
 			int baseNeighbor = Neighbor(B, triangle);
 			if (baseNeighbor != -1) {
+				SetPriority(triangle);
+				SetPriority(baseNeighbor);
 				float * p = (priorities[baseNeighbor - 1] < priorities[triangle - 1]) ? 
 							&priorities[triangle - 1] : &priorities[baseNeighbor - 1]; 
 				mergeQueue.push_back(priority(triangle, p));
 			}
 			make_heap(splitQueue.begin(), splitQueue.end(), MaxPriority);
-			splitQueue.pop_back();
 			max = *splitQueue[0].p;
-			cout << "Split" << endl;
+			//cout << "Split " << counter << endl;
 			if (splitQueue.empty()) 
 				break;
 			else if (!splitQueue.empty())
 			 	max = *splitQueue[0].p;
 		}
+		//cout << "before break" << endl;
+		cout << counter;
+		if (counter == 1000) break;
+		counter++;
 	}
+	//cout << "end while" << endl;
 	frame++;
 }
 
+void RTIN::ForceSplit(int triangle) {
+	int baseNeighbor = Neighbor(B, triangle);
+	if (baseNeighbor == -1) { 
+		Split(triangle);
+	} else if (flags[baseNeighbor]) {
+		Split(baseNeighbor);
+		Split(triangle);
+	} else {
+		int baseNeighborParent = Parent(baseNeighbor);
+		ForceSplit(baseNeighborParent);
+		Split(baseNeighbor);
+		Split(triangle);
+	}
+}
+
+void RTIN::Split(int triangle) {
+	if (Child(LEFT, triangle) != -1 && flags[triangle] == 1) {
+		flags[triangle] = 0;
+		int left = Child(LEFT, triangle);
+		int right = Child(RIGHT, triangle);
+		flags[left] = 1;
+		flags[right] = 1;
+		for (int i = 0; i < splitQueue.size(); i++) {
+			if (splitQueue[i].triangle == triangle) {
+				//cout << "triangle " << triangle << " removed" << endl;
+				splitQueue.erase(splitQueue.begin() + i);
+				break;
+			}
+		}
+		SetPriority(left);
+		SetPriority(right);
+		splitQueue.push_back(priority(left, &priorities[left - 1]));
+		splitQueue.push_back(priority(right, &priorities[right - 1]));
+		triangles++;
+	}
+}
+
+void RTIN::Merge(int triangle) {
+	int T_B = Neighbor(B, triangle);
+	flags[triangle] = 1;
+	flags[T_B] = 1;
+	SetPriority(triangle);
+	SetPriority(T_B);
+	splitQueue.push_back(priority(triangle, &priorities[triangle-1]));
+	push_heap(splitQueue.begin(), splitQueue.end(), MaxPriority);
+	splitQueue.push_back(priority(T_B, &priorities[T_B-1]));
+	push_heap(splitQueue.begin(), splitQueue.end(), MaxPriority);
+	int left = Child(LEFT, triangle);
+	int right = Child(RIGHT, triangle);
+	flags[left] = 0;
+	flags[right] = 0;
+	left = Child(LEFT, T_B);
+	right = Child(RIGHT, T_B);
+	flags[left] = 0;
+	flags[right] = 0;
+	for (int i = 0; i < mergeQueue.size(); i++) {
+		if (mergeQueue[i].triangle == triangle) {
+			mergeQueue.erase(mergeQueue.begin() + i);
+			break;
+		}
+	}
+	int parent = Parent(triangle);
+	int baseNeighbor = Neighbor(B, parent);
+	if (flags[Child(LEFT, parent)] && flags[Child(RIGHT, parent)] &&
+		flags[Child(LEFT, baseNeighbor)] && flags[Child(RIGHT, baseNeighbor)]) {
+		SetPriority(parent);
+		SetPriority(baseNeighbor);
+		float * p = (priorities[baseNeighbor - 1] < priorities[parent - 1]) ? 
+					&priorities[parent - 1] : &priorities[baseNeighbor - 1]; 
+		mergeQueue.push_back(priority(triangle, p));
+	}
+	triangle = Neighbor(B, triangle);
+	parent = Parent(triangle);
+	baseNeighbor = Neighbor(B, parent);
+	if (flags[Child(LEFT, parent)] && flags[Child(RIGHT, parent)] &&
+		flags[Child(LEFT, baseNeighbor)] && flags[Child(RIGHT, baseNeighbor)]) {
+		SetPriority(parent);
+		SetPriority(baseNeighbor);
+		float * p = (priorities[baseNeighbor - 1] < priorities[parent - 1]) ? 
+					&priorities[parent - 1] : &priorities[baseNeighbor - 1]; 
+		mergeQueue.push_back(priority(triangle, p));
+	}
+	triangles -= 2;
+
+}
 
 void RTIN::DrawWire() {
 	glColor4f(0.0, 0.0, 0.0, 1.0);
@@ -190,85 +295,13 @@ int RTIN::Neighbor(neighbor n, int triangle) {
 	return 0;
 }
 
-void RTIN::ForceSplit(int triangle) {
-	int baseNeighbor = Neighbor(B, triangle);
-	if (baseNeighbor == -1) { 
-		Split(triangle);
-	} else if (flags[baseNeighbor]) {
-		Split(baseNeighbor);
-		Split(triangle);
-	} else {
-		int baseNeighborParent = Parent(baseNeighbor);
-		ForceSplit(baseNeighborParent);
-		Split(baseNeighbor);
-		Split(triangle);
-	}
-}
 
-void RTIN::Split(int triangle) {
-	if (Child(LEFT, triangle) != -1 && flags[triangle] == 1) {
-		flags[triangle] = 0;
-		int left = Child(LEFT, triangle);
-		int right = Child(RIGHT, triangle);
-		flags[left] = 1;
-		flags[right] = 1;
-		for (int i = 0; i < splitQueue.size(); i++) {
-			if (splitQueue[i].triangle == triangle) {
-				splitQueue.erase(splitQueue.begin() + i);
-				break;
-			}
-		}
-		splitQueue.push_back(priority(left, &priorities[left - 1]));
-		splitQueue.push_back(priority(right, &priorities[right - 1]));
-		triangles++;
-	}
-}
-
-void RTIN::Merge(int triangle) {
-	int T_B = Neighbor(B, triangle);
-	flags[triangle] = 1;
-	flags[T_B] = 1;
-	int left = Child(LEFT, triangle);
-	int right = Child(RIGHT, triangle);
-	flags[left] = 0;
-	flags[right] = 0;
-	left = Child(LEFT, T_B);
-	right = Child(RIGHT, T_B);
-	flags[left] = 0;
-	flags[right] = 0;
-	for (int i = 0; i < mergeQueue.size(); i++) {
-		if (mergeQueue[i].triangle == triangle) {
-			mergeQueue.erase(mergeQueue.begin() + i);
-			break;
-		}
-	}
-	int parent = Parent(triangle);
-	int baseNeighbor = Neighbor(B, parent);
-	if (flags[Child(LEFT, parent)] && flags[Child(RIGHT, parent)] &&
-		flags[Child(LEFT, baseNeighbor)] && flags[Child(RIGHT, baseNeighbor)]) {
-		SetPriority(parent);
-		SetPriority(baseNeighbor);
-		float * p = (priorities[baseNeighbor - 1] < priorities[parent - 1]) ? 
-					&priorities[parent - 1] : &priorities[baseNeighbor - 1]; 
-		mergeQueue.push_back(priority(triangle, p));
-	}
-	triangle = Neighbor(B, triangle);
-	parent = Parent(triangle);
-	baseNeighbor = Neighbor(B, parent);
-	if (flags[Child(LEFT, parent)] && flags[Child(RIGHT, parent)] &&
-		flags[Child(LEFT, baseNeighbor)] && flags[Child(RIGHT, baseNeighbor)]) {
-		SetPriority(parent);
-		SetPriority(baseNeighbor);
-		float * p = (priorities[baseNeighbor - 1] < priorities[parent - 1]) ? 
-					&priorities[parent - 1] : &priorities[baseNeighbor - 1]; 
-		mergeQueue.push_back(priority(triangle, p));
-	}
-	triangles -= 2;
-
-}
 
 void RTIN::Triangulate(const char * filename, int levels, vec4 *ep, vec4 *ed) {
 	size = (2 << levels) - 1;
+	target = size - (2 << (levels - 1));
+	target /= 2;
+	if (target > 1000) target = 1000;
 	flags = new int[size];
 	e_T = new float[size];
 	faceNormalBuffer = new vec3[size - 1];
@@ -449,7 +482,7 @@ void RTIN::SetEye(vec4 *ep, vec4 *ed) {
 }
 
 void RTIN::SetPriority(int triangle) {
-	mat4 cameraSpace = LookAt(*eye_pos, *eye_pos+*eye_dir, vec4(0.0, 0.0, 1.0, 1.0));
+	mat4 cameraSpace = LookAt(*eye_pos, (*eye_pos)+(*eye_dir), vec4(0.0, 0.0, 1.0, 1.0));
 	vec4 abc = cameraSpace * vec4(0.0, 0.0, e_T[triangle - 1], 1.0);
 
 	int i = 3 * (triangle - 1);
@@ -470,7 +503,9 @@ void RTIN::SetPriority(int triangle) {
 			if (minTemp < min) min = minTemp;
 		}
 	}
-
-	priorities[triangle - 1] = 2 / min * sqrt(max);
-	cout << "Priority " << triangle << " = " << priorities[triangle - 1] << endl;
+	if (min <= 0) 
+		priorities[triangle - 1] = 1.7e+38 * sqrt(max);
+	else
+		priorities[triangle - 1] = 2 / min * sqrt(max);
+	//cout << "Priority " << triangle << " = " << priorities[triangle - 1] << endl;
 }

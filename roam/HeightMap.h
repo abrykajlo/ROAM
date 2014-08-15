@@ -16,6 +16,7 @@ public:
 	HeightMap(const char*, float);
 	int GetHeight();
 	int GetWidth();
+	void LoadBMP(const char*);
 	//~HeightMap();
 	float operator()(float, float);	
 };

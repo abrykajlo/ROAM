@@ -4,20 +4,14 @@
 
 using namespace std;
 
-bool compare(int i, int j) {
-	return j < i;
-}
+union conv {
+	unsigned int i;
+	float f;
+};
 
 int main() {
-	std::vector<int> ints;
-	ints.push_back(5);
-	ints.push_back(3);
-	ints.push_back(7);
-	std::cout << ints.front() << endl;
-	pop_heap(ints.begin(), ints.end()); ints.pop_back();
-	cout << ints.front() << endl;
-	make_heap(ints.begin(), ints.end(), compare);
-	ints.push_back(1); push_heap(ints.begin(), ints.end(), compare);
-	cout << ints.front();
+	union conv c;
+	c.i = 0x7F000000;
+	cout << c.f;
 	return 0;
 }
