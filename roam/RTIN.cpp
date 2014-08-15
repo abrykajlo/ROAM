@@ -94,11 +94,13 @@ void RTIN::Update() {
 	int counter = 0;
 	while (max > min || triangles != target) {
 		//cout << max << " " << min << endl;
-		cout << triangles << endl;
+		// cout << triangles << endl;
 		if (triangles > target) {
-			
+			if (mergeQueue.empty()) break;
+			cout << "here" << endl;
 			Merge(mergeQueue[0].triangle);
 			pop_heap(mergeQueue.begin(), mergeQueue.end(), MinPriority);
+			cout << "after" << endl;
 			mergeQueue.pop_back();
 			// cout << "Merge" << endl;
 			if (mergeQueue.empty()) 
@@ -133,6 +135,26 @@ void RTIN::Update() {
 		if (counter == 1000) break;
 		counter++;
 	}
+	// for (int i = 0; i < 10; i++) {
+	// 	if (splitQueue.empty()) 
+	// 			break;
+	// 	int triangle = splitQueue[0].triangle;
+	// 		ForceSplit(triangle);
+	// 		int baseNeighbor = Neighbor(B, triangle);
+	// 		if (baseNeighbor != -1) {
+	// 			SetPriority(triangle);
+	// 			SetPriority(baseNeighbor);
+	// 			if (priorities[baseNeighbor - 1] < priorities[triangle - 1]) {
+	// 				mergeQueue.push_back(priority(baseNeighbor, &priorities[baseNeighbor - 1]));
+	// 			} else {
+	// 				mergeQueue.push_back(priority(triangle, &priorities[triangle - 1]));
+	// 			}
+	// 			make_heap(mergeQueue.begin(), mergeQueue.end(), MinPriority);
+	// 			min = *mergeQueue[0].p;
+	// 		}
+	// 		make_heap(splitQueue.begin(), splitQueue.end(), MaxPriority);
+	// 		max = *splitQueue[0].p;
+	// }
 	//cout << "end while" << endl;
 	frame++;
 }
@@ -499,7 +521,8 @@ void RTIN::SetPriority(int triangle) {
 	float max, min, maxTemp, minTemp;
 
 	for (int n = 0; n < 3; n++) {
-		pqr = vertexBuffer[indexBuffer[i + n]];
+		pqr = cameraSpace * vertexBuffer[indexBuffer[i + n]];
+
 		maxTemp = pow(abc.x * pqr.z - abc.z * pqr.x, 2.0) + pow(abc.y * pqr.z - abc.z * pqr.y, 2.0);
 		minTemp = pow(pqr.z, 2.0) - pow(abc.z, 2.0);
 		if (n == 0) {

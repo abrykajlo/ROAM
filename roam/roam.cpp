@@ -22,7 +22,7 @@ int toggle = 0;
 float scale = 1.0;
 mat4 view_rotate = mat4(1.0);
 
-vec4 eye_pos = vec4(0.0, 0.0, 0.5, 1.0);
+vec4 eye_pos = vec4(0.5, 0.0, 0.5, 1.0);
 vec4 eye_dir = vec4(0.1, 0.0, 0.0, 0.0);
 RTIN r;
 
@@ -114,8 +114,8 @@ void myGlutMenu( int value )
 void myGlutIdle( void )
 {
   
-  if ( glutGetWindow() != terrain_win ) 
-    glutSetWindow(terrain_win);  
+  if ( glutGetWindow() != main_window ) 
+    glutSetWindow(main_window);  
 
 
   glutPostRedisplay();
