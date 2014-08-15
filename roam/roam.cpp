@@ -17,13 +17,13 @@ int   wireframe_win;
 int   terrain_win;
 int   sidebar_win;
 
-int toggle = 1;
+int toggle = 0;
 
 float scale = 1.0;
 mat4 view_rotate = mat4(1.0);
 
 vec4 eye_pos = vec4(0.0, 0.0, 0.5, 1.0);
-vec4 eye_dir = vec4(-0.1, 0.0, 0.0, 0.0);
+vec4 eye_dir = vec4(0.1, 0.0, 0.0, 0.0);
 RTIN r;
 
 GLfloat light0_ambient[] =  {0.5f, 0.5f, 0.5f, 1.0f};
@@ -114,8 +114,8 @@ void myGlutMenu( int value )
 void myGlutIdle( void )
 {
   
-  if ( glutGetWindow() != main_window ) 
-    glutSetWindow(main_window);  
+  if ( glutGetWindow() != terrain_win ) 
+    glutSetWindow(terrain_win);  
 
 
   glutPostRedisplay();
@@ -148,16 +148,8 @@ void myGlutReshape( int x, int y )
 void myGlutDisplay( void )
 {
   r.Update();
-  //PrintFrameRate();
-  glutSetWindow(sidebar_win);
-  glClearColor( .9f, .9f, .9f, 1.0f );
-  glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-  glutSwapBuffers();
   
-  if (toggle)
-    glutSetWindow(wireframe_win);
-  else
-    glutSetWindow(terrain_win);
+  if (toggle) {
 
   glClearColor( .9f, .9f, .9f, 1.0f );
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -170,10 +162,7 @@ void myGlutDisplay( void )
   r.DrawEye();
   glutSwapBuffers();
   
-  if (toggle)
-    glutSetWindow(terrain_win);
-  else
-    glutSetWindow(wireframe_win);
+  } else {
 
   glClearColor( .9f, .9f, .9f, 1.0f );
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -187,6 +176,7 @@ void myGlutDisplay( void )
   glScalef( scale, scale, scale );
   
   glutSwapBuffers(); 
+  }
 }
 
 
@@ -203,9 +193,7 @@ int main(int argc, char* argv[])
   glutInitWindowSize( 800, 600 );
   
   main_window = glutCreateWindow( "ROAM - Realtime Optimally Adapting Meshes" );
-  terrain_win = glutCreateSubWindow(main_window, 600, 0, 600, 600);
-  wireframe_win = glutCreateSubWindow(main_window, 600, 0, 200, 200);
-  sidebar_win = glutCreateSubWindow(main_window, 600, 200, 200, 400);
+  
   glutDisplayFunc( myGlutDisplay );
   glutReshapeFunc( NULL );  
   glutKeyboardFunc( myGlutKeyboard );

@@ -112,9 +112,11 @@ void RTIN::Update() {
 			if (baseNeighbor != -1) {
 				SetPriority(triangle);
 				SetPriority(baseNeighbor);
-				float * p = (priorities[baseNeighbor - 1] < priorities[triangle - 1]) ? 
-							&priorities[triangle - 1] : &priorities[baseNeighbor - 1]; 
-				mergeQueue.push_back(priority(triangle, p));
+				if (priorities[baseNeighbor - 1] < priorities[triangle - 1]) {
+					mergeQueue.push_back(priority(baseNeighbor, &priorities[baseNeighbor - 1]));
+				} else {
+					mergeQueue.push_back(priority(triangle, &priorities[triangle - 1]));
+				}
 				make_heap(mergeQueue.begin(), mergeQueue.end(), MinPriority);
 				min = *mergeQueue[0].p;
 			}
@@ -174,6 +176,8 @@ void RTIN::Split(int triangle) {
 
 void RTIN::Merge(int triangle) {
 	int T_B = Neighbor(B, triangle);
+	if (!flags[Child(LEFT, triangle)] || !flags[Child(RIGHT, triangle)] ||
+		!flags[Child(LEFT, T_B)] || !flags[Child(LEFT, T_B)]) return;
 	flags[triangle] = 1;
 	flags[T_B] = 1;
 	SetPriority(triangle);
@@ -304,6 +308,7 @@ void RTIN::Triangulate(const char * filename, int levels, vec4 *ep, vec4 *ed) {
 	target = size - (2 << (levels - 1));
 	target /= 2;
 	if (target > 1000) target = 1000;
+	if (levels <= 4) target = size - 3;
 	flags = new int[size];
 	e_T = new float[size];
 	faceNormalBuffer = new vec3[size - 1];
