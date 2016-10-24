@@ -1,4 +1,4 @@
-#include "include/bitmap.h"
+#include "bitmap.h"
 
 
 #ifndef HEIGHT_MAP_H
