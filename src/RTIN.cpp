@@ -1,15 +1,17 @@
+#include "RTIN.h"
+#include "HeightMap.h"
+
+#include <GL/glew.h>
+#include <boost/qvm/vec.hpp>
+
 #include <iostream>
 #include <algorithm>
 #include <vector>
 #include <cmath>
-#include "RTIN.h"
-#include "HeightMap.h"
 
 #define TRIANGLE_COUNT 1000
 
 using namespace std;
-
-
 
 //isnt exactly safe but is the fastest hack
 bool MaxPriority(priority p1, priority p2) {
@@ -23,7 +25,6 @@ bool MinPriority(priority p1, priority p2) {
 priority::priority(int _t, float * _p) {
 	triangle = _t;
 	p = _p;
-	//cout << "Triangle " << triangle << " with priority " << *p << endl;
 }
 
 RTIN::RTIN() {
@@ -38,7 +39,7 @@ RTIN::RTIN() {
 	frame = 0;
 }
 
-RTIN::RTIN(vec4* ep, vec4* ed) {
+RTIN::RTIN(vec<float, 4>* ep, vec<float, 4>* ed) {
 	eye_dir = ed;
 	eye_pos = ep;
 }
@@ -325,7 +326,7 @@ int RTIN::Neighbor(neighbor n, int triangle) {
 
 
 
-void RTIN::Triangulate(const char * filename, int levels, vec4 *ep, vec4 *ed) {
+void RTIN::Triangulate(const char * filename, int levels, vec<float, 4> *ep, vec<float, 4> *ed) {
 	size = (2 << levels) - 1;
 	target = size - (2 << (levels - 1));
 	target /= 2;
@@ -333,16 +334,16 @@ void RTIN::Triangulate(const char * filename, int levels, vec4 *ep, vec4 *ed) {
 	if (levels <= 4) target = size - 3;
 	flags = new int[size];
 	e_T = new float[size];
-	faceNormalBuffer = new vec3[size - 1];
-	vertexNormalBuffer = new vec3[4+(size-3)];
-	vertexBuffer = new vec4[4+(size-3)];
+	faceNormalBuffer = new vec<float, 3>[size - 1];
+	vertexNormalBuffer = new vec<float, 3>[4+(size-3)];
+	vertexBuffer = new vec<float, 4>[4+(size-3)];
 	indexBuffer = new GLuint[3 * (size - 1)];
 	HeightMap z(filename, 0.5);
 	
-	vertexBuffer[0] = vec4(-1.0, 1.0, 0.0, 1.0);
-	vertexBuffer[1] = vec4(1.0, 1.0, 0.0, 1.0);
-	vertexBuffer[2] = vec4(-1.0, -1.0, 0.0, 1.0);
-	vertexBuffer[3] = vec4(1.0, -1.0, 0.0, 1.0);
+	vertexBuffer[0] = {-1.0, 1.0, 0.0, 1.0};
+	vertexBuffer[1] = {1.0, 1.0, 0.0, 1.0};
+	vertexBuffer[2] = {-1.0, -1.0, 0.0, 1.0};
+	vertexBuffer[3] = {1.0, -1.0, 0.0, 1.0};
 
 	vertexBuffer[0].z = z(vertexBuffer[0].x, vertexBuffer[0].y);
 	vertexBuffer[1].z = z(vertexBuffer[1].x, vertexBuffer[1].y);
@@ -378,21 +379,19 @@ void RTIN::Triangulate(const char * filename, int levels, vec4 *ep, vec4 *ed) {
 		indexBuffer[j + 1] = indexBuffer[i];
 		indexBuffer[j + 2] = v;
 
-		//cout << indexBuffer[j] << " " << indexBuffer[j+1] << " " << indexBuffer[j+2] << endl;
-
 		j = 3 * (right - 1);
 
 		indexBuffer[j] = indexBuffer[i + 1];
 		indexBuffer[j + 1] = indexBuffer[i + 2];
 		indexBuffer[j + 2] = v; 
-		//cout << indexBuffer[j] << " " << indexBuffer[j+1] << " " << indexBuffer[j+2] << endl;
+		
 		v++;
 	}
 
 	for (int i = 0; i < size - 1; i++) {
-		vec4 a = vertexBuffer[indexBuffer[3 * i]];
-		vec4 b = vertexBuffer[indexBuffer[3 * i + 1]];
-		vec4 c = vertexBuffer[indexBuffer[3 * i + 2]];
+		vec<float, 4> a = vertexBuffer[indexBuffer[3 * i]];
+		vec<float, 4> b = vertexBuffer[indexBuffer[3 * i + 1]];
+		vec<float, 4> c = vertexBuffer[indexBuffer[3 * i + 2]];
 		faceNormalBuffer[i] = normalize( cross( (b - a), (c - a) ) );
 	}
 
@@ -420,8 +419,8 @@ void RTIN::DrawTriangle(int triangle) {
 	if (flags[triangle] == 1) {
 		int i = 3 * (triangle - 1);
 		int index;
-		vec4 vect;
-		vec3 norm;
+		vec<float, 4> vect;
+		vec<float, 3> norm;
 		glBegin(GL_TRIANGLES);
 			glColor4f(0.5,0.5,0.5,1.0);
 			index = indexBuffer[i];
@@ -455,7 +454,7 @@ void RTIN::DrawWireTriangle(int triangle) {
 	if (flags[triangle] == 1) {
 		int i = 3 * (triangle - 1);
 		int index;
-		vec4 vect;
+		vec<float, 4> vect;
 		glBegin(GL_LINE_LOOP);
 			index = indexBuffer[i];
 			vect = vertexBuffer[index]; i++;
@@ -495,28 +494,28 @@ void RTIN::BuildWedgies() {
 }
 
 void RTIN::DrawEye() {
-	glPointSize(5.0f);
-	glBegin(GL_POINTS);
-		glVertex4f(eye_pos->x, eye_pos->y, eye_pos->z, 1.0);
-	glEnd();
-	glBegin(GL_LINES);
-		glVertex4f(eye_pos->x, eye_pos->y, eye_pos->z, 1.0);
-		glVertex4f(eye_pos->x + eye_dir->x, eye_pos->y + eye_dir->y, eye_pos->z + eye_dir->z, 1.0);
-	glEnd();
+	// glPointSize(5.0f);
+	// glBegin(GL_POINTS);
+	// 	glVertex4f(eye_pos->x, eye_pos->y, eye_pos->z, 1.0);
+	// glEnd();
+	// glBegin(GL_LINES);
+	// 	glVertex4f(eye_pos->x, eye_pos->y, eye_pos->z, 1.0);
+	// 	glVertex4f(eye_pos->x + eye_dir->x, eye_pos->y + eye_dir->y, eye_pos->z + eye_dir->z, 1.0);
+	// glEnd();
 }
 
-void RTIN::SetEye(vec4 *ep, vec4 *ed) {
+void RTIN::SetEye(vec<float, 4> *ep, vec<float, 4> *ed) {
 	eye_pos = ep;
 	eye_dir = ed;
 }
 
 void RTIN::SetPriority(int triangle) {
-	mat4 cameraSpace = LookAt(*eye_pos, (*eye_pos)+(*eye_dir), vec4(0.0, 0.0, 1.0, 1.0));
-	vec4 abc = cameraSpace * vec4(0.0, 0.0, e_T[triangle - 1], 1.0);
+	mat4 cameraSpace = LookAt(*eye_pos, (*eye_pos)+(*eye_dir), vec<float, 4>(0.0, 0.0, 1.0, 1.0));
+	vec<float, 4> abc = cameraSpace * vec<float, 4>(0.0, 0.0, e_T[triangle - 1], 1.0);
 
 	int i = 3 * (triangle - 1);
 
-	vec4 pqr;
+	vec<float, 4> pqr;
 	
 	float max, min, maxTemp, minTemp;
 

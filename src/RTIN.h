@@ -1,13 +1,21 @@
+#include <boost/qvm/vec.hpp>
+#include <GL/glew.h>
+
 #include <vector>
-#include <inttypes.h>
 
 using namespace std;
+using namespace boost::qvm;
 
 typedef struct priority {
 	int triangle;
 	float * p;
 	priority(int, float*);
 } priority;
+
+//vector definitions
+typedef vec<GLfloat, 3> vec3;
+typedef vec<GLfloat, 4> vec4;
+typedef vec<GLuint, 3> triangle;
 
 enum child {LEFT = 1, RIGHT = 2};
 
@@ -54,13 +62,13 @@ private:
 	vec4 * eye_pos;
 	vec4 * eye_dir;
 
-	int * flags;
-	float * e_T;
+	vector<int> flags;
+	vector<float> e_T;
 	int size;
 	int triangles;
 	int target;
-	vec3 * faceNormalBuffer;
-	vec3 * vertexNormalBuffer;
-	vec4 * vertexBuffer;
-	GLuint * indexBuffer;
+	vector<vec3> faceNormalBuffer;
+	vector<vec3> vertexNormalBuffer;
+	vector<vec4> vertexBuffer;
+	vector<triangle> triangleBuffer;
 };

@@ -1,5 +1,9 @@
 #include "RTIN.h"
-#include "Angel.h"
+
+#include <boost/qvm/vec.hpp>
+#include <boost/qvm/mat.hpp>
+#include <GL/glew.h>
+
 #include <string>
 #include <iostream>
 #include <stdlib.h>
@@ -22,8 +26,8 @@ int toggle = 0;
 float scale = 1.0;
 mat4 view_rotate = mat4(1.0);
 
-vec4 eye_pos = vec4(0.5, 0.0, 0.5, 1.0);
-vec4 eye_dir = vec4(0.1, 0.0, 0.0, 0.0);
+vec<float, 4> eye_pos = {0.5, 0.0, 0.5, 1.0};
+vec<float, 4> eye_dir = {0.1, 0.0, 0.0, 0.0};
 RTIN r;
 
 GLfloat light0_ambient[] =  {0.5f, 0.5f, 0.5f, 1.0f};
@@ -41,14 +45,14 @@ void setOrthographicProjection() {
 }
 
 void setCameraView() {
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  gluPerspective(50.0, 1.0, 0.1, 1.0);
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-  gluLookAt(eye_pos.x, eye_pos.y, eye_pos.z,
-            eye_pos.x+eye_dir.x, eye_pos.y+eye_dir.y, eye_pos.z + eye_dir.z,
-            0.0,       0.0,       1.0);
+  // glMatrixMode(GL_PROJECTION);
+  // glLoadIdentity();
+  // gluPerspective(50.0, 1.0, 0.1, 1.0);
+  // glMatrixMode(GL_MODELVIEW);
+  // glLoadIdentity();
+  // gluLookAt(eye_pos.x, eye_pos.y, eye_pos.z,
+  //           eye_pos.x+eye_dir.x, eye_pos.y+eye_dir.y, eye_pos.z + eye_dir.z,
+  //           0.0,       0.0,       1.0);
 }
 
 void PrintFrameRate() {
