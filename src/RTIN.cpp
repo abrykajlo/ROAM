@@ -1,5 +1,4 @@
 #include "RTIN.h"
-#include "HeightMap.h"
 
 #include <GL/glew.h>
 #include <boost/qvm/vec.hpp>
